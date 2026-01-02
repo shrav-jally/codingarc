@@ -1,0 +1,30 @@
+from collections import defaultdict
+
+class Solution:
+    def groupAnagrams(self, strs):
+        groups = defaultdict(list)
+
+        for word in strs:
+            key = tuple(sorted(word))
+            groups[key].append(word)
+
+        return list(groups.values())
+
+
+
+
+class Solution:
+    def groupAnagrams(self, strs):
+        lst = []  
+        for word in strs:
+            found = False
+
+            for group in lst:
+                if sorted(word) == sorted(group[0]):
+                    group.append(word)
+                    found = True
+                    break
+            if not found:
+                lst.append([word])
+
+        return lst
