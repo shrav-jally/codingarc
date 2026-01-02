@@ -1,0 +1,9 @@
+from collections import Counter
+class Solution:
+    def topKFrequent(self, nums, k):
+        freq = Counter(nums)
+        sorted_freq = sorted(freq, key=freq.get, reverse=True)
+        lst = []
+        for i in range(k):
+            lst.append(sorted_freq[i])
+        return lst
