@@ -1,0 +1,9 @@
+class Solution:
+    def numOfWays(self, n):
+        MOD = 10**9 + 7
+        a, b = 6, 6   # first row
+
+        for _ in range(1, n):
+            a, b = (3*a + 2*b) % MOD, (2*a + 2*b) % MOD
+
+        return (a + b) % MOD
