@@ -1,0 +1,11 @@
+class Solution:
+    def checkValid(self, matrix):
+        n = len(matrix)
+        required = set(range(1, n + 1))
+        for row in matrix:
+            if set(row) != required:
+                return False
+        for col in zip(*matrix):
+            if set(col) != required:
+                return False
+        return True
