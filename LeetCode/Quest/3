@@ -1,0 +1,11 @@
+class Solution:
+    def findMaxConsecutiveOnes(self, nums):
+        tones=0
+        ones=0
+        for i in range(len(nums)):
+            if nums[i]==1:
+                ones+=1
+            else:
+                ones=0
+            tones=max(tones, ones)
+        return tones
