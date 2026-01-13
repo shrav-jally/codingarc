@@ -1,0 +1,24 @@
+class Solution:
+    def separateSquares(self, squares):
+        events = []
+        total_area = 0.0
+        for _, y, l in squares:
+            total_area += l * l
+            events.append((y, l))        
+            events.append((y + l, -l))   
+
+        events.sort()
+        target = total_area / 2.0
+        cur_area = 0.0
+        cur_slope = 0.0
+        prev_y = events[0][0]
+        for y, delta in events:
+            if y > prev_y and cur_slope > 0:
+                added = cur_slope * (y - prev_y)
+                if cur_area + added >= target:
+                    return prev_y + (target - cur_area) / cur_slope
+                cur_area += added
+
+            cur_slope += delta
+            prev_y = y
+        return prev_y
