@@ -1,0 +1,71 @@
+from typing import List
+import bisect
+
+class Solution:
+    def separateSquares(self, squares: List[List[int]]) -> float:
+        events = []
+        xs = set()
+
+        for x, y, l in squares:
+            events.append((y, 1, x, x + l))
+            events.append((y + l, -1, x, x + l))
+            xs.add(x)
+            xs.add(x + l)
+
+        events.sort()
+        xs = sorted(xs)
+        x_id = {v: i for i, v in enumerate(xs)}
+
+        # Segment tree style coverage count
+        cnt = [0] * (len(xs) * 4)
+        length = [0] * (len(xs) * 4)
+
+        def push_up(node, l, r):
+            if cnt[node] > 0:
+                length[node] = xs[r] - xs[l]
+            elif l + 1 == r:
+                length[node] = 0
+            else:
+                length[node] = length[node * 2] + length[node * 2 + 1]
+
+        def update(node, l, r, ql, qr, val):
+            if ql >= r or qr <= l:
+                return
+            if ql <= l and r <= qr:
+                cnt[node] += val
+                push_up(node, l, r)
+                return
+            mid = (l + r) // 2
+            update(node * 2, l, mid, ql, qr, val)
+            update(node * 2 + 1, mid, r, ql, qr, val)
+            push_up(node, l, r)
+
+        total_area = 0.0
+        prev_y = events[0][0]
+
+        # First pass: compute total area
+        for y, typ, x1, x2 in events:
+            dy = y - prev_y
+            total_area += dy * length[1]
+            update(1, 0, len(xs) - 1, x_id[x1], x_id[x2], typ)
+            prev_y = y
+
+        half = total_area / 2
+        curr_area = 0.0
+        cnt = [0] * (len(xs) * 4)
+        length = [0] * (len(xs) * 4)
+        prev_y = events[0][0]
+
+        # Second pass: find split y
+        for y, typ, x1, x2 in events:
+            dy = y - prev_y
+            slab_area = dy * length[1]
+
+            if curr_area + slab_area >= half:
+                return prev_y + (half - curr_area) / length[1]
+
+            curr_area += slab_area
+            update(1, 0, len(xs) - 1, x_id[x1], x_id[x2], typ)
+            prev_y = y
+
+        return prev_y
