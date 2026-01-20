@@ -1,0 +1,23 @@
+from typing import List
+
+class Solution:
+    def minBitwiseArray(self, nums: List[int]) -> List[int]:
+        ans = []
+
+        for p in nums:
+            # Even primes (only 2) are impossible
+            if p % 2 == 0:
+                ans.append(-1)
+                continue
+
+            # Count trailing ones
+            t = 0
+            temp = p
+            while temp & 1:
+                t += 1
+                temp >>= 1
+
+            # Clear the highest trailing 1 to minimize x
+            ans.append(p - (1 << (t - 1)))
+
+        return ans
