@@ -1,0 +1,74 @@
+from heapq import heappush, heappop
+from typing import List
+
+class Solution:
+    def minimumPairRemoval(self, nums: List[int]) -> int:
+        n = len(nums)
+        if n <= 1:
+            return 0
+
+        # Doubly linked list using indices
+        prev = [-1] * n
+        nxt = [-1] * n
+        alive = [True] * n
+
+        for i in range(n):
+            if i > 0:
+                prev[i] = i - 1
+            if i < n - 1:
+                nxt[i] = i + 1
+
+        # Count bad positions
+        bad = 0
+        for i in range(n - 1):
+            if nums[i] > nums[i + 1]:
+                bad += 1
+
+        # Min-heap of (sum, left_index)
+        heap = []
+        for i in range(n - 1):
+            heappush(heap, (nums[i] + nums[i + 1], i))
+
+        ops = 0
+
+        while bad > 0:
+            # Get valid minimum-sum adjacent pair
+            while True:
+                s, i = heappop(heap)
+                j = nxt[i]
+                if j != -1 and alive[i] and alive[j] and nums[i] + nums[j] == s:
+                    break
+
+            # Before merge: remove bad contributions
+            pi = prev[i]
+            nj = nxt[j]
+
+            if pi != -1 and nums[pi] > nums[i]:
+                bad -= 1
+            if nums[i] > nums[j]:
+                bad -= 1
+            if nj != -1 and nums[j] > nums[nj]:
+                bad -= 1
+
+            # Merge j into i
+            nums[i] += nums[j]
+            alive[j] = False
+            nxt[i] = nj
+            if nj != -1:
+                prev[nj] = i
+
+            # After merge: add new bad contributions
+            if pi != -1 and nums[pi] > nums[i]:
+                bad += 1
+            if nj != -1 and nums[i] > nums[nj]:
+                bad += 1
+
+            # Push new adjacent sums
+            if pi != -1:
+                heappush(heap, (nums[pi] + nums[i], pi))
+            if nj != -1:
+                heappush(heap, (nums[i] + nums[nj], i))
+
+            ops += 1
+
+        return ops
