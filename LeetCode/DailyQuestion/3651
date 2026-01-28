@@ -1,0 +1,52 @@
+import heapq
+from typing import List
+
+class Solution:
+    def minCost(self, grid: List[List[int]], k: int) -> int:
+        m, n = len(grid), len(grid[0])
+        INF = 10**18
+
+        # dist[t][i][j] = min cost to reach (i,j) using t teleports
+        dist = [[[INF] * n for _ in range(m)] for _ in range(k + 1)]
+        dist[0][0][0] = 0
+
+        # All cells sorted by value (for teleport optimization)
+        cells = []
+        for i in range(m):
+            for j in range(n):
+                cells.append((grid[i][j], i, j))
+        cells.sort()
+
+        # Pointer per teleport layer
+        ptr = [0] * (k + 1)
+
+        pq = [(0, 0, 0, 0)]  # cost, i, j, teleports_used
+
+        while pq:
+            cost, i, j, t = heapq.heappop(pq)
+            if cost > dist[t][i][j]:
+                continue
+
+            # Normal moves
+            if i + 1 < m:
+                ncost = cost + grid[i + 1][j]
+                if ncost < dist[t][i + 1][j]:
+                    dist[t][i + 1][j] = ncost
+                    heapq.heappush(pq, (ncost, i + 1, j, t))
+
+            if j + 1 < n:
+                ncost = cost + grid[i][j + 1]
+                if ncost < dist[t][i][j + 1]:
+                    dist[t][i][j + 1] = ncost
+                    heapq.heappush(pq, (ncost, i, j + 1, t))
+
+            # Teleport
+            if t < k:
+                while ptr[t + 1] < len(cells) and cells[ptr[t + 1]][0] <= grid[i][j]:
+                    _, x, y = cells[ptr[t + 1]]
+                    if cost < dist[t + 1][x][y]:
+                        dist[t + 1][x][y] = cost
+                        heapq.heappush(pq, (cost, x, y, t + 1))
+                    ptr[t + 1] += 1
+
+        return min(dist[t][m - 1][n - 1] for t in range(k + 1))
