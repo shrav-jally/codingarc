@@ -1,0 +1,71 @@
+from typing import List
+import math
+from collections import defaultdict
+
+class Solution:
+    def minimumCost(
+        self,
+        source: str,
+        target: str,
+        original: List[str],
+        changed: List[str],
+        cost: List[int]
+    ) -> int:
+        n = len(source)
+        INF = 10**18
+
+        # Group transformations by length
+        by_len = defaultdict(list)
+        for o, c, w in zip(original, changed, cost):
+            by_len[len(o)].append((o, c, w))
+
+        # For each length, compute all-pairs shortest paths
+        trans_cost = dict()
+
+        for L, rules in by_len.items():
+            strings = set()
+            for o, c, _ in rules:
+                strings.add(o)
+                strings.add(c)
+
+            idx = {s: i for i, s in enumerate(strings)}
+            m = len(strings)
+
+            dist = [[INF] * m for _ in range(m)]
+            for i in range(m):
+                dist[i][i] = 0
+
+            for o, c, w in rules:
+                dist[idx[o]][idx[c]] = min(dist[idx[o]][idx[c]], w)
+
+            # Floyd-Warshall
+            for k in range(m):
+                for i in range(m):
+                    for j in range(m):
+                        if dist[i][k] + dist[k][j] < dist[i][j]:
+                            dist[i][j] = dist[i][k] + dist[k][j]
+
+            trans_cost[L] = (idx, dist)
+
+        # DP
+        dp = [INF] * (n + 1)
+        dp[n] = 0
+
+        for i in range(n - 1, -1, -1):
+            # Option 1: no operation
+            if source[i] == target[i]:
+                dp[i] = dp[i + 1]
+
+            # Option 2: substring transformations
+            for L, (idx, dist) in trans_cost.items():
+                j = i + L
+                if j > n:
+                    continue
+                s = source[i:j]
+                t = target[i:j]
+                if s in idx and t in idx:
+                    c = dist[idx[s]][idx[t]]
+                    if c < INF:
+                        dp[i] = min(dp[i], c + dp[j])
+
+        return -1 if dp[0] >= INF else dp[0]
