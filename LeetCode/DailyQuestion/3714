@@ -1,0 +1,61 @@
+class Solution:
+    def longestBalanced(self, s: str) -> int:
+        n = len(s)
+        ans = 0
+        
+        # ---------- Case 1: single character ----------
+        streak = 1
+        for i in range(1, n):
+            if s[i] == s[i - 1]:
+                streak += 1
+            else:
+                ans = max(ans, streak)
+                streak = 1
+        ans = max(ans, streak)
+        
+        # ---------- Case 2: two characters equal ----------
+        def solve_pair(x, y):
+            nonlocal ans
+            prefix = 0
+            seen = {0: -1}
+            
+            for i, ch in enumerate(s):
+                if ch != x and ch != y:
+                    prefix = 0
+                    seen = {0: i}
+                    continue
+                
+                if ch == x:
+                    prefix += 1
+                else:
+                    prefix -= 1
+                
+                if prefix in seen:
+                    ans = max(ans, i - seen[prefix])
+                else:
+                    seen[prefix] = i
+        
+        solve_pair('a', 'b')
+        solve_pair('a', 'c')
+        solve_pair('b', 'c')
+        
+        # ---------- Case 3: three characters equal ----------
+        countA = countB = countC = 0
+        seen = {(0, 0): -1}
+        
+        for i, ch in enumerate(s):
+            if ch == 'a':
+                countA += 1
+            elif ch == 'b':
+                countB += 1
+            else:
+                countC += 1
+            
+            key = (countA - countB, countA - countC)
+            
+            if key in seen:
+                ans = max(ans, i - seen[key])
+            else:
+                seen[key] = i
+        
+        return ans
