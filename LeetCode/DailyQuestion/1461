@@ -1,0 +1,27 @@
+class Solution:
+    def hasAllCodes(self, s: str, k: int) -> bool:
+        n = len(s)
+        
+        # Total possible binary codes of length k
+        need = 1 << k
+        
+        # If not enough length, impossible
+        if n < k or n - k + 1 < need:
+            return False
+        
+        seen = set()
+        mask = 0
+        
+        for i in range(n):
+            # Left shift and add new bit
+            mask = ((mask << 1) & ((1 << k) - 1)) | int(s[i])
+            
+            # Start recording once we have k bits
+            if i >= k - 1:
+                seen.add(mask)
+                
+                # Early stop if all codes found
+                if len(seen) == need:
+                    return True
+        
+        return False   
