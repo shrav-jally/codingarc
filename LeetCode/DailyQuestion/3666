@@ -1,0 +1,23 @@
+class Solution:
+    def minOperations(self, s: str, k: int) -> int:
+        z = s.count('0')
+        
+        if z == 0:
+            return 0
+        
+        n = len(s)
+        if k > n:
+            return -1
+        
+        # Minimum operations needed to cover all zeros
+        x = (z + k - 1) // k   # ceil(z / k)
+        
+        # Adjust x until parity condition satisfies
+        while True:
+            if x * k >= z and (x * k) % 2 == z % 2:
+                return x
+            x += 1
+            
+            # Safe guard (won’t realistically loop much)
+            if x > n + z:
+                return -1
