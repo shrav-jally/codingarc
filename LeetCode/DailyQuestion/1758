@@ -1,0 +1,15 @@
+class Solution:
+    def minOperations(self, s: str) -> int:
+        mismatch_start_with_0 = 0
+        mismatch_start_with_1 = 0
+        
+        for i, ch in enumerate(s):
+            # Expected if starting with '0'
+            if ch != ('0' if i % 2 == 0 else '1'):
+                mismatch_start_with_0 += 1
+            
+            # Expected if starting with '1'
+            if ch != ('1' if i % 2 == 0 else '0'):
+                mismatch_start_with_1 += 1
+        
+        return min(mismatch_start_with_0, mismatch_start_with_1)
