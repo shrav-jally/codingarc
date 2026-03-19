@@ -1,23 +1,30 @@
 from typing import List
 
 class Solution:
-    def largestSubmatrix(self, matrix: List[List[int]]) -> int:
-        m, n = len(matrix), len(matrix[0])
+    def numberOfSubmatrices(self, grid: List[List[str]]) -> int:
+        m, n = len(grid), len(grid[0])
         
-        # Step 1: Build heights
-        for i in range(1, m):
-            for j in range(n):
-                if matrix[i][j] == 1:
-                    matrix[i][j] += matrix[i-1][j]
+        # prefixX[i][j] stores the number of 'X' in submatrix (0,0) to (i-1, j-1)
+        prefixX = [[0] * (n + 1) for _ in range(m + 1)]
+        # prefixY[i][j] stores the number of 'Y' in submatrix (0,0) to (i-1, j-1)
+        prefixY = [[0] * (n + 1) for _ in range(m + 1)]
         
-        max_area = 0
+        res = 0
         
-        # Step 2 & 3: Sort each row and compute area
-        for i in range(m):
-            row = sorted(matrix[i], reverse=True)
-            for j in range(n):
-                if row[j] == 0:
-                    break
-                max_area = max(max_area, row[j] * (j + 1))
-        
-        return max_area
+        for r in range(m):
+            for c in range(n):
+                # Calculate running count of X and Y for current submatrix
+                x_val = 1 if grid[r][c] == 'X' else 0
+                y_val = 1 if grid[r][c] == 'Y' else 0
+                
+                # Standard 2D prefix sum formula
+                prefixX[r+1][c+1] = x_val + prefixX[r][c+1] + prefixX[r+1][c] - prefixX[r][c]
+                prefixY[r+1][c+1] = y_val + prefixY[r][c+1] + prefixY[r+1][c] - prefixY[r][c]
+                
+                # Check conditions: 
+                # 1. Equal X and Y
+                # 2. At least one X
+                if prefixX[r+1][c+1] > 0 and prefixX[r+1][c+1] == prefixY[r+1][c+1]:
+                    res += 1
+                    
+        return res
