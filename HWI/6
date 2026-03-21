@@ -1,0 +1,120 @@
+Problem Statement
+
+A company ABC has N employees.
+It has one office on each floor and in each office works one employee.
+Each employee i works on the ith floor and has skill A[i].
+Each employee can belong to at most one team.
+Each team should have employees working in consecutive floors from i to j (a contiguous subarray). 
+ABC uses a metric called the "expert number" which is calculated as the sum of all the "absent expert values" from each team.
+The "absent expert value" of a team is the first skill starting from 0 which is not present in the team (this is mathematically known as the MEX - Minimum Excluded value).
+You need to divide the employees into teams such that the company’s expert number is as large as possible.
+Find the maximum expert number that can be obtained.
+
+Constraints
+1 <= N <= 10^5
+0 <= A[i] <= 10^3
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+4                                 5                                 10
+0                                 0                                 0
+2                                 1                                 1
+1                                 2                                 0
+1                                 1                                 1
+                                  0                                 1
+                                                                    0
+                                                                    3
+                                                                    2
+                                                                    1
+                                                                    0
+
+Output: 3                         Output: 5                         Output: 10
+
+Explanation:                      Explanation:                      Explanation:
+N=4, A=[0, 2, 1, 1]               N=5, A=[0, 1, 2, 1, 0]            N=10, A=[0,1,0,1,1,0,3,2,1,0]
+
+Teams:                            Teams:                            Teams: 
+[0, 2, 1] and [1]                 [0, 1, 2] and [1, 0]              [0,1], [0,1], [1,0,3,2], [1,0]
+
+MEX([0, 2, 1]) = 3                MEX([0, 1, 2]) = 3                MEX([0, 1]) = 2
+MEX([1]) = 0                      MEX([1, 0]) = 2                   MEX([0, 1]) = 2
+                                                                    MEX([1, 0, 3, 2]) = 4
+Sum = 3 + 0 = 3                   Sum = 3 + 2 = 5                   MEX([1, 0]) = 2
+
+                                                                    Sum = 2 + 2 + 4 + 2 = 10
+
+
+Approach & Complexity
+
+We want to partition the array to maximize the sum of the MEX of each contiguous part.
+This is a classic Dynamic Programming problem:
+Let dp[i] be the maximum expert number we can get by partitioning the prefix of the first i elements.
+To compute dp[i], we could theoretically check every previous index j, but an O(N^2) approach will cause a Time Limit Exceeded (TLE) error for N = 10^5.
+
+Optimization using MEX properties:
+The MEX of a subarray ending at i is at least 'm' ONLY IF all numbers from 0 to m-1 are present in that subarray.
+If we keep an array `last_pos` where `last_pos[x]` is the most recent 1-based index where element x appeared, we can determine the valid starting points.
+To get a MEX of at least m, the subarray must start at or before min(last_pos[0], last_pos[1], ..., last_pos[m-1]).
+Because our DP array is non-decreasing (adding more elements never strictly decreases the maximum sum), to maximize `dp[j-1] + m`, we should pick the largest valid starting index j. This optimal j is exactly `min(last_pos[0...m-1])`.
+
+Instead of iterating through all previous indices j, we only iterate through the possible MEX values `m`. As soon as a required number hasn't appeared yet (min position becomes 0), we break early. This limits our inner loop strictly to the current MEX limit, making it incredibly fast.
+
+Time Complexity: O(N * min(N, max_A)). Since the loop breaks early, it practically runs in O(N).
+Space Complexity: O(N) for the DP array and O(max_A) for the last_pos tracking array.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    A = [int(x) for x in input_data[1:N+1]]
+    
+    # max_val covers constraints up to 10^5 safely just in case hidden test cases are large
+    max_val = 100005 
+    last_pos = [0] * max_val
+    dp = [0] * (N + 1)
+    
+    for i in range(1, N + 1):
+        val = A[i - 1]
+        if val < max_val:
+            last_pos[val] = i
+            
+        # Base case: forming a team of just A[i-1]. If A[i-1] != 0, MEX is 0.
+        dp[i] = dp[i - 1]
+        current_min_pos = i
+        
+        # Check all possible valid MEX values backwards
+        for m in range(1, max_val):
+            if last_pos[m - 1] < current_min_pos:
+                current_min_pos = last_pos[m - 1]
+            
+            # If the required element hasn't appeared, we can't form MEX 'm' or higher
+            if current_min_pos == 0:
+                break
+                
+            cand = dp[current_min_pos - 1] + m
+            if cand > dp[i]:
+                dp[i] = cand
+                
+    print(dp[N])
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 1043: Partition Array for Maximum Sum (Medium)
+Why it's similar: This problem requires partitioning an array into contiguous subarrays to maximize a sum based on a subarray property (in this case, the max element rather than MEX). It is the perfect problem to master the O(N) optimized DP state transition logic used above.
+
+2. LeetCode 2547: Minimum Cost to Split an Array (Hard)
+Why it's similar: A more advanced variation of array partitioning where you evaluate subarrays based on elements properties and frequencies. It will solidify your sliding state / prefix evaluation logic.
