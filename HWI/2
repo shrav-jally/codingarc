@@ -1,0 +1,120 @@
+Problem Statement
+
+You are given an array A of length N and an integer k.
+A subarray from l to r is considered good if the number of distinct elements in that subarray doesn’t exceed k. 
+Additionally, an empty subarray is also a good subarray and its sum is considered to be zero.
+Find the maximum sum of a good subarray.
+
+Constraints
+1 <= N <= 10^5
+1 <= k <= n
+-10^5 <= A[i] <= 10^5
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                 Case 3
+------                            ------                 ------
+Input:                            Input:                 Input:
+11                                3                      5
+2                                 1                      5
+1                                 -1                     -1
+2                                 -2                     1
+2                                 -3                     3
+3                                                        2
+2                                                        -1
+3
+5
+1
+2
+1
+1
+
+Output: 12                        Output: 0              Output: 6
+
+Explanation:                      Explanation:           Explanation:
+N = 11, k = 2                     N = 3, k = 1           N = 5, k = 5
+A = [1,2,2,3,2,3,5,1,2,1,1]       A = [-1, -2, -3]       A = [-1, 1, 3, 2, -1]
+
+We select the subarray:           Optimal is to choose   Optimal is to choose
+[2, 2, 3, 2, 3]                   an empty subarray      the subarray [1, 3, 2]
+It contains <= 2 distinct         since all elements     It contains <= 5 distinct
+elements (2 and 3).               are negative.          elements.
+Sum = 2+2+3+2+3 = 12              Sum = 0                Sum = 1+3+2 = 6
+
+
+Approach & Complexity
+
+We need to maximize the sum of a subarray A[start...r] such that it has at most k distinct elements.
+The sum of A[start...r] is equal to S[r+1] - S[start], where S is the prefix sum array.
+To maximize this sum for a fixed right endpoint `r`, we need to minimize S[start], where `start` is within the valid sliding window [L, r].
+
+1. Use a Sliding Window [L, r] to maintain at most k distinct elements using a frequency hash map.
+2. Use a Monotonic Increasing Deque to keep track of the minimum prefix sum S within the current valid window.
+3. As the window shrinks (L increases), pop out-of-bound indices from the front of the deque.
+4. The maximum sum ending at `r` is simply S[r+1] - S[deque[0]]. Compare this with the global max.
+
+Time Complexity: O(N) because each index is added and removed from the deque and frequency map at most once.
+Space Complexity: O(N) for the prefix sums, frequency map, and deque.
+
+
+Python 3 Solution
+
+import sys
+from collections import deque
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    k = int(input_data[1])
+    A = [int(x) for x in input_data[2:N+2]]
+    
+    S = [0] * (N + 1)
+    for i in range(N):
+        S[i+1] = S[i] + A[i]
+        
+    max_sum = 0
+    freq = {}
+    distinct = 0
+    L = 0
+    
+    q = deque()
+    
+    for r in range(N):
+        if freq.get(A[r], 0) == 0:
+            distinct += 1
+        freq[A[r]] = freq.get(A[r], 0) + 1
+        
+        while distinct > k:
+            freq[A[L]] -= 1
+            if freq[A[L]] == 0:
+                distinct -= 1
+            L += 1
+            
+        while q and S[q[-1]] >= S[r]:
+            q.pop()
+        q.append(r)
+        
+        while q and q[0] < L:
+            q.popleft()
+            
+        if q:
+            max_sum = max(max_sum, S[r+1] - S[q[0]])
+            
+    print(max_sum)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 904: Fruit Into Baskets (Medium)
+Why it's similar: This problem asks for the longest subarray with at most 2 distinct elements.
+What you'll practice: The exact Sliding Window and Frequency Map logic used in the Infosys problem to dynamically maintain `L` and `r` when tracking distinct items.
+
+2. LeetCode 1438: Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit (Medium)
+Why it's similar: This requires finding a valid subarray where conditions change as you expand, and elements can be added/removed.
+What you'll practice: Combining a Sliding Window with a Monotonic Deque. This is the core advanced technique that makes the Infosys solution run efficiently in O(N) time instead of O(N^2).
