@@ -1,0 +1,146 @@
+======================================================================
+PROBLEM 7: CONNECTED COMPONENTS BEAUTY
+======================================================================
+
+Problem Statement
+
+You are given a graph with n nodes, initially disconnected (zero edges).
+Each node has a value written on it such that the i-th node has the value i.
+A range [l, r] is "covered" in a set s if for each i from l to r, i appears in s.
+The "beauty" of a set s is defined as the minimum number of covered ranges such that each element of s belongs to at least one of these ranges. 
+For example: beauty({1, 2, 4, 5, 8, 11}) = 4 (the ranges are [1, 2], [4, 5], [8], and [11]).
+
+You have to process q queries of two types:
+Type 1 - (1, u, v): Add an edge between u and v.
+Type 2 - (2, u, 0): Find the beauty (number of covered ranges) in the connected component of u.
+
+Find the sum of answers to all Type 2 queries.
+
+Constraints
+1 <= n <= 10^5
+1 <= q <= 10^5
+t = 3 (number of columns in queries)
+0 <= queries[i][j] <= n
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+2                                 2                                 10
+1                                 3                                 3
+3                                 3                                 3
+2 1 0                             2 1 0                             1 1 4
+                                  1 1 2                             2 1 0
+                                  2 1 0                             2 4 0
+
+Output: 1                         Output: 2                         Output: 4
+
+Explanation:                      Explanation:                      Explanation:
+n=2, q=1, t=3                     n=2, q=3, t=3                     n=10, q=3, t=3
+
+q1: (2, 1, 0)                     q1: (2, 1, 0)                     q1: (1, 1, 4) -> Edge(1, 4)
+Component of 1 = {1}              Component of 1 = {1}              Component = {1, 4}
+Covered range: [1, 1]             Covered range: [1, 1]             
+Ans = 1                           Ans = 1                           q2: (2, 1, 0)
+                                                                    Component of 1 = {1, 4}
+Total Sum = 1                     q2: (1, 1, 2) -> Edge(1, 2)       Ranges: [1, 1], [4, 4] -> Ans = 2
+                                                                    
+                                  q3: (2, 1, 0)                     q3: (2, 4, 0)
+                                  Component of 1 = {1, 2}           Component of 4 = {1, 4}
+                                  Covered range: [1, 2]             Ranges: [1, 1], [4, 4] -> Ans = 2
+                                  Ans = 1                           
+                                                                    Total Sum = 2 + 2 = 4
+                                  Total Sum = 1 + 1 = 2
+
+
+Approach & Complexity
+
+We can model this problem using a Disjoint Set Union (DSU) to keep track of the connected components.
+The core mathematical observation is how the "beauty" changes when two components merge.
+Initially, a single node `x` has a beauty of 1 (the range [x, x]).
+When we merge Set A and Set B, the new beauty isn't just `beauty(A) + beauty(B)`. If an element `x` from Set A connects with `x-1` or `x+1` in Set B, two separate ranges fuse into a single continuous range, reducing the total beauty by 1 for each adjacent connection.
+
+To merge efficiently, we use a technique called "Small-to-Large Merging". 
+We maintain the actual elements of each component in a hash set. When merging, we always iterate through the elements of the smaller set and insert them into the larger set. 
+For every element `x` moving from the smaller set to the larger set:
+1. If `x - 1` is already in the larger set, decrement the combined beauty by 1.
+2. If `x + 1` is already in the larger set, decrement the combined beauty by 1.
+3. Add `x` to the larger set.
+
+Time Complexity: O(Q + N log N). Searching and adding to a Python set is O(1) on average. Due to Small-to-Large merging, each element is moved at most log(N) times.
+Space Complexity: O(N) to store the parent array, component sets, and beauty values.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    sys.setrecursionlimit(200000)
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    n = int(input_data[0])
+    q = int(input_data[1])
+    t = int(input_data[2])
+    
+    parent = list(range(n + 1))
+    elements = [{i} for i in range(n + 1)]
+    beauty = [1] * (n + 1)
+    
+    def find(i):
+        if parent[i] == i:
+            return i
+        parent[i] = find(parent[i])
+        return parent[i]
+        
+    def union(i, j):
+        root_i = find(i)
+        root_j = find(j)
+        if root_i != root_j:
+            # Small-to-Large Merging
+            if len(elements[root_i]) > len(elements[root_j]):
+                root_i, root_j = root_j, root_i
+                
+            beauty[root_j] += beauty[root_i]
+            
+            for x in elements[root_i]:
+                if (x - 1) in elements[root_j]:
+                    beauty[root_j] -= 1
+                if (x + 1) in elements[root_j]:
+                    beauty[root_j] -= 1
+                elements[root_j].add(x)
+                
+            parent[root_i] = root_j
+            elements[root_i] = None # Free up memory
+            
+    idx = 3
+    total_ans = 0
+    
+    for _ in range(q):
+        type_q = int(input_data[idx])
+        u = int(input_data[idx+1])
+        v = int(input_data[idx+2])
+        idx += 3
+        
+        if type_q == 1:
+            union(u, v)
+        else:
+            root_u = find(u)
+            total_ans += beauty[root_u]
+            
+    print(total_ans)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 128: Longest Consecutive Sequence (Medium)
+Why it's similar: This relies heavily on looking up `x-1` and `x+1` in a hash set to group contiguous numbers together.
+
+2. LeetCode 839: Similar String Groups (Hard)
+Why it's similar: A fantastic problem to practice dynamically merging components using Disjoint Set Union (DSU) while managing an internal characteristic (like similarity or beauty) across the unified sets.
