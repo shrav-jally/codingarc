@@ -1,0 +1,84 @@
+Problem Statement
+
+Given a tree with N nodes, each node v has value W[v]. Select a subset S of nodes maximizing total value, subject to Independence (no two selected nodes share an edge).
+- Kolakoski bonus: Let c = |S|. If c is a position where Kolakoski sequence (1,2,2,1,1,2...) has value 1, add bonus = 30 * (c mod 10 + 1).
+- Thue-Morse penalty: If total value V has popcount(V) mod 2 == 1, subtract 25.
+- Ore constraint: If count of nodes in S where W[v] is an Ore number > K, multiply score by 0.9.
+
+Constraints
+1 <= N <= 1000
+1 <= W[i] <= 2000
+1 <= K <= 10
+
+Sample Test Cases
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+9 (N)                             9 (N)                             10 (N)
+W = [476, 1621, ..., 767]         W = [936, 1382, ..., 984]         W = [262, 6, ..., 1313]
+8 (Edges)                         8 (Edges)                         9 (Edges)
+1 (K)                             1 (K)                             3 (K)
+
+Output: 7309                      Output: 6475                      Output: 7318
+
+
+Solution (Python 3)
+
+import sys
+sys.setrecursionlimit(200000)
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data: return
+    N = int(input_data[0])
+    W = [int(x) for x in input_data[1:N+1]]
+    T = [int(x) for x in input_data[N+1:2*N+1]] # Node types
+    M = int(input_data[2*N+1])
+    adj = [[] for _ in range(N)]
+    idx = 2*N + 2
+    for _ in range(M):
+        u, v = int(input_data[idx]), int(input_data[idx+1])
+        adj[u].append(v); adj[v].append(u)
+        idx += 2
+    K = int(input_data[idx])
+
+    dp0, dp1 = [None]*N, [None]*N
+    def dfs(u, p):
+        d0, d1 = {0: (0, [])}, {1: (W[u], [u])}
+        for v in adj[u]:
+            if v == p: continue
+            dfs(v, u)
+            best_v = {}
+            for c, (w, n) in dp0[v].items(): best_v[c] = (w, n)
+            for c, (w, n) in dp1[v].items():
+                if c not in best_v or w > best_v[c][0]: best_v[c] = (w, n)
+            
+            new_d0, new_d1 = {}, {}
+            for c1, (w1, n1) in d0.items():
+                for c2, (w2, n2) in best_v.items():
+                    c, w = c1 + c2, w1 + w2
+                    if c not in new_d0 or w > new_d0[c][0]: new_d0[c] = (w, n1 + n2)
+            for c1, (w1, n1) in d1.items():
+                for c2, (w2, n2) in dp0[v].items():
+                    c, w = c1 + c2, w1 + w2
+                    if c not in new_d1 or w > new_d1[c][0]: new_d1[c] = (w, n1 + n2)
+            d0, d1 = new_d0, new_d1
+        dp0[u], dp1[u] = d0, d1
+
+    dfs(0, -1)
+    ore = {1, 6, 28, 496, 8128}
+    kol = [1, 2, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2, 1, 1, 2, 1, 1, 2, 2, 1]
+    
+    ans = -float('inf')
+    for d in (dp0[0], dp1[0]):
+        for c, (w, nodes) in d.items():
+            bonus = 30 * (c % 10 + 1) if c > 0 and kol[c-1] == 1 else 0
+            pen = 25 if bin(w).count('1') % 2 == 1 else 0
+            score = w + bonus - pen
+            if sum(1 for n in nodes if W[n] in ore) > K: score *= 0.9
+            ans = max(ans, score)
+    print(int(ans))
+
+if __name__ == "__main__":
+    solve()
