@@ -1,0 +1,112 @@
+Problem Statement
+
+Given an array a of length n and an integer k. You must perform the following operation exactly k times:
+choose two indices i, j and swap(a[i], a[j]).
+Find the maximum possible MSS (maximum subarray sum) after performing the above operation exactly k times.
+Note: Swapping the same pair again is allowed but useless (a double-swap cancels out). Therefore, performing exactly k swaps is equivalent to at most k useful swaps.
+
+Constraints
+2 <= n <= 500
+0 <= k <= n
+-1000 <= a[i] <= 1000
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+3                                 3                                 3
+1                                 0                                 0
+1                                 5                                 1
+-5                                -1                                -5
+2                                 5                                 2
+
+Output: 3                         Output: 2                         Output: 2
+
+Explanation:                      Explanation:                      Explanation:
+n=3, k=1                          n=3, k=0                          n=3, k=0
+a = [1, -5, 2]                    a = [5, -1, 5]                    a = [1, -5, 2]
+                                  
+By swapping 1 and -5, we          The maximum subarray sum          The maximum subarray sum
+get array [-5, 1, 2].             is the sum of [2] which is        is the sum of [2] which is
+The max subarray sum is           equal to 2.                       equal to 2.
+1 + 2 = 3.                                                          
+                                  (Note: The original prompt        
+                                  contains a copy-paste error       
+                                  for Case 2's explanation,         
+                                  but the logic remains clear).     
+
+
+Approach & Complexity
+
+The problem asks us to find the maximum subarray sum after at most `k` optimal swaps with elements outside the subarray. 
+Because N is relatively small (N <= 500), an O(N^3) or O(N^3 log N) approach is perfectly viable and will pass within the time limit.
+
+1. We can iterate over all possible subarrays by fixing the left endpoint `L` and the right endpoint `R`. There are O(N^2) such subarrays.
+2. For a fixed subarray from `L` to `R`, we want to maximize its sum.
+3. The best way to increase the sum is to take the smallest elements INSIDE the subarray and swap them with the largest elements OUTSIDE the subarray.
+4. We can achieve this by gathering all elements inside the subarray and sorting them in ascending order. We gather all elements outside the subarray and sort them in descending order.
+5. We then zip through both sorted lists, and as long as the outside element is strictly greater than the inside element (and we haven't exceeded `k` swaps), we add the difference to our current subarray sum.
+6. We keep track of the global maximum sum across all evaluated subarrays.
+
+
+
+Time Complexity: O(N^3 log N). There are O(N^2) subarrays. For each, we sort arrays of size up to N, which takes O(N log N). Since N=500, Python's highly optimized Timsort handles this easily within the 1-2 second execution window.
+Space Complexity: O(N) to store the inside and outside array slices for each iteration.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    n = int(input_data[0])
+    k = int(input_data[1])
+    a = [int(x) for x in input_data[2:n+2]]
+    
+    max_sum = -float('inf')
+    
+    # Iterate over all possible subarray start and end points
+    for l in range(n):
+        for r in range(l, n):
+            inside = a[l:r+1]
+            outside = a[:l] + a[r+1:]
+            
+            # Sort inside ascending (to replace smallest first)
+            inside.sort()
+            # Sort outside descending (to use largest first)
+            outside.sort(reverse=True)
+            
+            curr_sum = sum(inside)
+            
+            # We can perform at most k swaps, and we can't swap more elements 
+            # than what exists inside or outside the subarray.
+            swaps = min(k, len(inside), len(outside))
+            
+            for i in range(swaps):
+                # Only swap if it strictly increases our sum
+                if outside[i] > inside[i]:
+                    curr_sum += outside[i] - inside[i]
+                else:
+                    break
+                    
+            if curr_sum > max_sum:
+                max_sum = curr_sum
+                
+    print(max_sum)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 53: Maximum Subarray (Medium)
+Why it's similar: The absolute foundational algorithm (Kadane's Algorithm) for understanding contiguous subarray sums before adding the complication of swapping elements.
+
+2. LeetCode 1746: Maximum Subarray Sum After One Operation (Medium)
+Why it's similar: It introduces the concept of modifying elements (squaring one element) to alter the maximum subarray sum. It teaches you how to think about modifying a sliding window dynamically.
