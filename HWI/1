@@ -1,0 +1,171 @@
+Problem Statement
+
+You’re given an array A of n integers and q queries. Each query can be one of the following two types:
+Type 1 Query: (1, l, r) - Replace A[i] with (i - l + 1) * A[l] for each index i, where l <= i <= r.
+Type 2 Query: (2, l, r) - Calculate the sum of the elements in A from index l to index r.
+
+Find the sum of answers to all Type 2 queries. Since the answer can be large, return it modulo 10^9 + 7.
+
+Input Format
+The first line contains an integer, n, denoting the number of elements in A.
+Each line i of the n subsequent lines contains an integer describing A[i].
+The next line contains an integer, q, denoting the number of rows in queries.
+Each line i of the q subsequent lines contains 3 space separated integers each describing the row queries[i].
+The 3 space separated integers denote the value of either (1,l,r) or (2,l,r) for the i-th query.
+
+Constraints
+1 <= n <= 10^5
+1 <= A[i] <= 10^5
+1 <= q <= 10^5
+0 <= queries[i][j] <= 10^5
+Array is 0-indexed based on the sample explanations.
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                              Case 2                              Case 3
+------                              ------                              ------
+Input:                              Input:                              Input:
+7                                   7                                   7
+1 4 5 1 6 7 8                       3 7 4 2 5 3 7                       1 8 6 10 5 6 9
+5                                   5                                   5
+1 1 6                               1 0 4                               2 0 3
+1 1 5                               2 0 1                               1 2 3
+2 5 5                               1 3 6                               1 0 6
+2 3 4                               2 3 3                               2 1 4
+2 3 3                               2 0 5                               2 6 6
+
+Output: 60                          Output: 111                         Output: 46
+
+Explanation:                        Explanation:                        Explanation:
+A = [1, 4, 5, 1, 6, 7, 8]           A = [3, 7, 4, 2, 5, 3, 7]           A = [1, 8, 6, 10, 5, 6, 9]
+
+query 1: (1, 1, 6)                  query 1: (1, 0, 4)                  query 1: (2, 0, 3)
+A = [1, 4, 8, 12, 16, 20, 24]       A = [3, 6, 9, 12, 15, 3, 7]         sum = A[0]+..+A[3] = 25
+
+query 2: (1, 1, 5)                  query 2: (2, 0, 1)                  query 2: (1, 2, 3)
+A = [1, 4, 8, 12, 16, 20, 24]       sum = A[0]+A[1] = 9                 A = [1, 8, 6, 12, 5, 6, 9]
+
+query 3: (2, 5, 5)                  query 3: (1, 3, 6)                  query 3: (1, 0, 6)
+sum = A[5] = 20                     A = [3, 6, 9, 12, 24, 36, 48]       A = [1, 2, 3, 4, 5, 6, 7]
+
+query 4: (2, 3, 4)                  query 4: (2, 3, 3)                  query 4: (2, 1, 4)
+sum = A[3]+A[4] = 28                sum = A[3] = 12                     sum = 14
+
+query 5: (2, 3, 3)                  query 5: (2, 0, 5)                  query 5: (2, 6, 6)
+sum = A[3] = 12                     sum = A[0]+..+A[5] = 90             sum = 7
+
+Total = 20 + 28 + 12 = 60           Total = 9 + 12 + 90 = 111           Total = 25 + 14 + 7 = 46
+
+
+Approach & Complexity
+
+A brute-force approach taking O(n * q) will result in a Time Limit Exceeded (TLE) error given the constraints. 
+To optimize this to O(N + Q log N), we use a Segment Tree with Lazy Propagation. 
+
+When a Type 1 query updates a range [l, r], it replaces the values with an arithmetic progression (AP): A[l], 2 * A[l], 3 * A[l] ...
+The lazy tag at each node will store the starting index of the AP and the multiplier A[l]. When pushing updates down or querying, 
+we can calculate the sum of the AP in O(1) time for any segment using the sum of an arithmetic sequence formula.
+
+Time Complexity: O(N) to build, O(log N) per query -> Total: O(N + Q log N)
+Space Complexity: O(N) for the Segment Tree arrays.
+
+
+Python 3 Solution
+
+import sys
+
+sys.setrecursionlimit(300000)
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    
+    n = int(input_data[0])
+    A = [int(x) for x in input_data[1:n+1]]
+    q = int(input_data[n+1])
+    
+    MOD = 10**9 + 7
+    
+    tree = [0] * (4 * n)
+    lazy = [None] * (4 * n)
+    
+    def build(node, start, end):
+        if start == end:
+            tree[node] = A[start] % MOD
+            return
+        mid = (start + end) // 2
+        build(2 * node, start, mid)
+        build(2 * node + 1, mid + 1, end)
+        tree[node] = (tree[2 * node] + tree[2 * node + 1]) % MOD
+        
+    def apply_lazy(node, start, end, L, val):
+        lazy[node] = (L, val)
+        length = end - start + 1
+        first = (start - L + 1) * val
+        last = (end - L + 1) * val
+        tree[node] = (length * (first + last) // 2) % MOD
+        
+    def push(node, start, end):
+        if lazy[node] is not None:
+            L, val = lazy[node]
+            mid = (start + end) // 2
+            apply_lazy(2 * node, start, mid, L, val)
+            apply_lazy(2 * node + 1, mid + 1, end, L, val)
+            lazy[node] = None
+            
+    def update(node, start, end, l, r, L, val):
+        if start > r or end < l:
+            return
+        if start >= l and end <= r:
+            apply_lazy(node, start, end, L, val)
+            return
+        push(node, start, end)
+        mid = (start + end) // 2
+        update(2 * node, start, mid, l, r, L, val)
+        update(2 * node + 1, mid + 1, end, l, r, L, val)
+        tree[node] = (tree[2 * node] + tree[2 * node + 1]) % MOD
+        
+    def query(node, start, end, l, r):
+        if start > r or end < l:
+            return 0
+        if start >= l and end <= r:
+            return tree[node]
+        push(node, start, end)
+        mid = (start + end) // 2
+        p1 = query(2 * node, start, mid, l, r)
+        p2 = query(2 * node + 1, mid + 1, end, l, r)
+        return (p1 + p2) % MOD
+
+    build(1, 0, n - 1)
+    
+    idx = n + 2
+    total_sum = 0
+    
+    for _ in range(q):
+        type_q = int(input_data[idx])
+        l = int(input_data[idx+1])
+        r = int(input_data[idx+2])
+        idx += 3
+        
+        if type_q == 1:
+            val = query(1, 0, n - 1, l, l)
+            update(1, 0, n - 1, l, r, l, val)
+        else:
+            total_sum = (total_sum + query(1, 0, n - 1, l, r)) % MOD
+            
+    print(total_sum)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 303: Range Sum Query - Immutable (Easy)
+Why it's similar: This is the foundational problem for your Type 2 queries. It asks you to calculate the sum of elements between indices left and right without any updates happening in between.
+What you'll practice: Prefix Sums. It teaches you how to answer range sum queries in O(1) time after an O(N) preprocessing step, which is a great stepping stone before jumping into Segment Trees.
+
+2. LeetCode 307: Range Sum Query - Mutable (Medium)
+Why it's similar: This introduces the update aspect (like your Type 1 queries). You have to find the sum of a range, but the array elements can change between queries.
+What you'll practice: Segment Trees or Fenwick Trees. This is the exact core data structure needed for the Infosys question, just without the added complexity of "lazy propagation" (since LeetCode 307 only does single-point updates, not range updates).
