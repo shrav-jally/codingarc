@@ -1,0 +1,128 @@
+Problem Statement
+
+You are given N locks in a row (1-indexed). Each lock i has a value L[i]. There is also one key under each lock, and key j has value L[j].
+You may assign some keys to some locks under the following rules:
+1. You may assign key j to lock i only if: j < i.
+2. Assignments where the key and lock have the same value are forbidden: L[j] != L[i].
+3. Assigning key j to lock i gives a cost (effective value) E = |L[j] - L[i]|.
+4. Each lock can be assigned at most once, and each key can be used at most once.
+5. Let "even" be the number of assignments with an even cost, and "odd" be the number of assignments with an odd cost. A set of assignments is valid only if: even >= odd.
+
+Find the minimum total cost of a valid set of assignments.
+
+Constraints
+1 <= N <= 10^5
+1 <= L[i] <= 10^9
+(Implicit: A valid assignment is guaranteed to exist or return -1)
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+6                                 6                                 6
+41                                45                                6
+54                                6                                 59
+15                                38                                1
+4                                 6                                 25
+54                                15                                59
+4                                 38                                50
+
+Output: 26                        Output: 30                        Output: 24
+
+Explanation:                      Explanation:                      Explanation:
+L = [41, 54, 15, 4, 54, 4]        L = [45, 6, 38, 6, 15, 38]        L = [6, 59, 1, 25, 59, 50]
+
+To satisfy even >= odd, we        To satisfy even >= odd, we        The smallest even-cost edge 
+must pick at least 1 even edge.   must pick at least 1 even edge.   is 24 (pairing 3 with 4).
+The smallest even edge is 26      The smallest even edge is 30      Cost = |1 - 25| = 24.
+(pairing 41 and 15).              (pairing 45 and 15).              
+Since adding more edges only      No combination of edges can       even = 1, odd = 0 -> valid.
+increases the total cost, we      sum to less than 30 while         Total cost = 24.
+just pick this single edge.       maintaining even >= odd.          
+even = 1, odd = 0 -> valid.       even = 1, odd = 0 -> valid.       
+Total cost = 26.                  Total cost = 30.
+
+
+Approach & Complexity
+
+This is a "Hard" problem that is actually a math puzzle in disguise. 
+Let's break down the rules:
+- All valid assignment costs are strictly greater than 0 (because L[j] != L[i]).
+- For a set to be valid, `even >= odd`.
+- If we pick 0 assignments, cost is 0, but the problem implies we need a non-empty set (as seen in the sample cases where 0 is never the answer).
+- If `odd = 0`, we must have `even >= 1`. The absolute minimum cost is simply the smallest single even-cost assignment available.
+- If we try to include odd-cost assignments (e.g., `even = 1, odd = 1`), the total cost would be `smallest_even + smallest_odd`. Since costs are strictly positive, this will ALWAYS be strictly greater than just picking the `smallest_even` alone!
+- Therefore, the optimal valid set of assignments is ALWAYS exactly ONE assignment with the smallest possible even cost.
+
+An even cost occurs when |L[j] - L[i]| is even. This only happens when L[j] and L[i] have the SAME parity (both are even numbers, or both are odd numbers).
+The condition `j < i` is trivial: for any pair of distinct elements in an array, one will naturally appear before the other. So we just need to find the minimum absolute difference between any two distinct numbers of the same parity.
+
+1. Separate the array into two lists: `evens` and `odds`.
+2. Sort both lists.
+3. Iterate through the sorted lists to find the minimum adjacent difference that is strictly greater than 0.
+4. The answer is the overall minimum difference found.
+
+
+
+Time Complexity: O(N log N) due to the sorting step. The subsequent linear scan takes O(N).
+Space Complexity: O(N) to store the separated parity arrays.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    L = [int(x) for x in input_data[1:N+1]]
+    
+    evens = []
+    odds = []
+    
+    # Group by parity
+    for val in L:
+        if val % 2 == 0:
+            evens.append(val)
+        else:
+            odds.append(val)
+            
+    # Sort to easily find minimum absolute differences
+    evens.sort()
+    odds.sort()
+    
+    min_cost = float('inf')
+    
+    # Find minimum strictly positive difference in evens
+    for i in range(len(evens) - 1):
+        diff = evens[i+1] - evens[i]
+        if diff > 0 and diff < min_cost:
+            min_cost = diff
+            
+    # Find minimum strictly positive difference in odds
+    for i in range(len(odds) - 1):
+        diff = odds[i+1] - odds[i]
+        if diff > 0 and diff < min_cost:
+            min_cost = diff
+            
+    # Print the result (fallback to -1 if no valid pair exists)
+    if min_cost == float('inf'):
+        print(-1)
+    else:
+        print(min_cost)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 532: K-diff Pairs in an Array (Medium)
+Why it's similar: It focuses on finding pairs in an array that satisfy a specific mathematical difference constraint. It helps reinforce the sorting and 1D distance scanning logic used here.
+
+2. LeetCode 1200: Minimum Absolute Difference (Easy)
+Why it's similar: This is the exact core algorithm we collapsed this "Hard" problem into! It asks you to sort an array and find pairs with the minimum absolute difference.
