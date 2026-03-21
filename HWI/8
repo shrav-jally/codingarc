@@ -1,0 +1,117 @@
+Problem Statement
+
+A group of N people are seated around a circular table to play a game.
+The game involves jumping from one chair to another. Each person sitting on chair i can jump A[i] chairs to either the right or left in one jump where 1 <= i <= N.
+Bob, sitting on chair X, needs to reach chair Y, where the escape door is located.
+Find the minimum number of jumps required to reach chair Y from chair X. If this is impossible using the given jump distances, then return -1.
+
+Constraints
+1 <= N <= 10^5
+1 <= X <= N
+1 <= Y <= N
+1 <= A[i] <= 10^5
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+5                                 5                                 6
+5                                 2                                 2
+1                                 4                                 3
+1                                 5                                 2
+2                                 4                                 2
+3                                 3                                 2
+2                                 2                                 2
+4                                 1                                 2
+                                                                    2
+
+Output: 1                         Output: 3                         Output: -1
+
+Explanation:                      Explanation:                      Explanation:
+N=5, X=5, Y=1                     N=5, X=2, Y=4                     N=6, X=2, Y=3
+A=[1, 2, 3, 2, 4]                 A=[5, 4, 3, 2, 1]                 A=[2, 2, 2, 2, 2, 2]
+
+Bob is at chair 5.                Bob is at chair 2.                Bob is at chair 2.
+Jump distance A[5] = 4.           Path: 2 -> 1 -> 5 -> 4            Jump distance A[2] = 2.
+Right jump: (5+4)%5 = chair 4     (Takes 3 jumps)                   He can only land on even 
+Left jump: (5-4)%5 = chair 1                                        numbered chairs (4, 6, 2).
+Target Y=1 reached in 1 jump.                                       Target Y=3 is odd.
+Answer is 1.                      Answer is 3.                      Impossible to reach, return -1.
+
+
+Approach & Complexity
+
+This problem asks for the minimum number of steps to reach a target in an unweighted graph. The optimal algorithmic approach for this is Breadth-First Search (BFS).
+
+1. The "graph" is the circular array of chairs (nodes 1 to N).
+2. For any chair `curr`, there are exactly two directed edges pointing to `next_right` and `next_left`.
+3. Because the table is circular and 1-indexed, we use modular arithmetic to wrap around. 
+   To jump `D` steps right: `next_right = (curr - 1 + D) % N + 1`
+   To jump `D` steps left: `next_left = (curr - 1 - D) % N + 1`
+   (Note: Python handles the modulo of negative numbers gracefully, wrapping them around exactly as needed).
+4. Initialize a queue with `(X, 0)` representing `(current_chair, jumps_taken)`.
+5. Maintain a `visited` boolean array so we do not get caught in an infinite jumping loop.
+6. Run the BFS. The first time we hit chair `Y`, we are guaranteed it is the shortest path, so we return `jumps + 1`. If the queue empties and we haven't found `Y`, return `-1`.
+
+
+
+Time Complexity: O(N) because in the worst case, we visit each of the N chairs exactly once.
+Space Complexity: O(N) for the BFS queue and the visited array.
+
+
+Python 3 Solution
+
+import sys
+from collections import deque
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    X = int(input_data[1])
+    Y = int(input_data[2])
+    
+    # 1-based indexing for A (pad index 0 with a dummy value)
+    A = [0] + [int(x) for x in input_data[3:N+3]]
+    
+    if X == Y:
+        print(0)
+        return
+        
+    # Queue stores tuples of (current_chair, jumps_taken)
+    queue = deque([(X, 0)])
+    visited = [False] * (N + 1)
+    visited[X] = True
+    
+    while queue:
+        curr, jumps = queue.popleft()
+        jump_dist = A[curr]
+        
+        # Calculate 1-based circular jumps
+        right_jump = (curr - 1 + jump_dist) % N + 1
+        left_jump = (curr - 1 - jump_dist) % N + 1
+        
+        for next_pos in (right_jump, left_jump):
+            if next_pos == Y:
+                print(jumps + 1)
+                return
+            if not visited[next_pos]:
+                visited[next_pos] = True
+                queue.append((next_pos, jumps + 1))
+                
+    print(-1)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 1306: Jump Game III (Medium)
+Why it's similar: This is almost the exact same problem! You are given an array of jump distances and can jump left or right. The only difference is that LeetCode 1306 is bounded (linear array) instead of circular, meaning you just check `0 <= next_pos < N` instead of using modulo arithmetic.
+
+2. LeetCode 1654: Minimum Jumps to Reach Home (Medium)
+Why it's similar: It asks for the shortest path using forward and backward jumps of fixed lengths, heavily testing your BFS state management and visited array logic.
