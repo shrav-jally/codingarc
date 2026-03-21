@@ -1,0 +1,202 @@
+Problem Statement
+
+You are given a tree which consists of N nodes. You are also given two distinct nodes A and B, and an array P where the parent of node U is given by P[U] (P[U] = 0 means U is the root of the given tree).
+
+We define the beauty of a query (U, V) as the number of nodes that belong to both:
+1. The subtree of U when the tree is rooted at A.
+2. The subtree of V when the tree is rooted at B.
+
+You are given a 2D array Queries which consists of Q queries. For each query, you are given two nodes U and V. 
+Let K be equal to the answer to the last query (initially 0). U and V are updated dynamically online before processing each query as follows:
+U = (U + K) % N + 1
+V = (V + K) % N + 1
+
+Find the sum of answers to all queries modulo 10^9 + 7.
+
+Constraints
+1 <= N <= 10^5
+1 <= A, B <= N
+0 <= P[i] <= N
+1 <= Q <= 10^5
+Col = 2
+1 <= Queries[i][j] <= N
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+2                                 2                                 4
+1                                 1                                 1
+2                                 2                                 2
+0                                 0                                 0
+1                                 1                                 1
+1                                 2                                 1
+2                                 2                                 3
+1 2                               1 1                               4
+                                  1 2                               2
+                                                                    3 3
+                                                                    1 3
+                                                                    4 4
+                                                                    1 2
+
+Output: 0                         Output: 3                         Output: 6
+
+Explanation:                      Explanation:                      Explanation:
+N=2, A=1, B=2, P=[0, 1]           N=2, A=1, B=2                     N=4, A=1, B=2
+K = 0                             Query 1: (1, 1) -> (2, 2)         Answers to the 4 queries evaluate
+Query 1: (1, 2) -> (2, 1)         Subtree 2 rooted at 1 = {2}       to 1, 2, 2, and 1 respectively.
+Subtree 2 rooted at 1 = {2}       Subtree 2 rooted at 2 = {1, 2}    Sum = 1 + 2 + 2 + 1 = 6.
+Subtree 1 rooted at 2 = {1}       Intersection = {2}, size = 1.
+Intersection is empty.            K = 1
+Answer is 0.                      Query 2: (1, 2) -> (1, 2)
+                                  Subtree 1 rooted at 1 = {1, 2}
+                                  Subtree 2 rooted at 2 = {1, 2}
+                                  Intersection = {1, 2}, size = 2.
+                                  Sum = 1 + 2 = 3.
+
+
+Approach & Complexity
+
+This is an advanced tree query problem. Computing tree intersections dynamically by re-rooting the tree for every query would take O(N * Q) time, leading to a Time Limit Exceeded (TLE) error. 
+Instead, we can answer each query in O(1) time by making a mathematical observation about subtrees and paths.
+
+Let's permanently root the entire tree at node A. 
+1. The "subtree of U rooted at A" is simply the standard subtree of U. Let's call this Sub_A(U).
+2. The "subtree of V rooted at B" depends on where V is relative to the path between A and B. Let's call this Sub_B(V).
+   - If V is NOT an ancestor of B (in our A-rooted tree), then rooting at B doesn't change V's subtree. So Sub_B(V) is just the standard subtree of V.
+   - If V is an ancestor of B, rooting the tree at B effectively "pulls" the tree upward through V. Sub_B(V) becomes the ENTIRE tree minus the standard subtree of the child of V that points towards B.
+   - If V == B, Sub_B(V) is the entire tree.
+
+
+
+By tracking Entry and Exit times (tin and tout) using a single Depth First Search (DFS), we can check if any node is an ancestor of another in O(1) time.
+Therefore, finding the intersection of Sub_A(U) and Sub_B(V) boils down to finding the intersection of either:
+- Two standard subtrees: If one is an ancestor of the other, the intersection is the smaller subtree. Otherwise, it's 0.
+- A standard subtree and a "complement" subtree: Evaluated using simple arithmetic on subtree sizes based on ancestor relationships.
+
+Time Complexity: O(N) to build the tree and run DFS + O(Q) to answer queries in O(1) time -> Total Time: O(N + Q).
+Space Complexity: O(N) for tree adjacency list, sizes, and entry/exit timers.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    sys.setrecursionlimit(300000)
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    idx = 0
+    N = int(input_data[idx])
+    A = int(input_data[idx+1]) - 1
+    B = int(input_data[idx+2]) - 1
+    idx += 3
+    
+    adj = [[] for _ in range(N)]
+    for i in range(N):
+        p = int(input_data[idx])
+        idx += 1
+        if p != 0:
+            adj[p - 1].append(i)
+            adj[i].append(p - 1)
+            
+    Q = int(input_data[idx])
+    Col = int(input_data[idx+1])
+    idx += 2
+    
+    # Tree properties when rooted at A
+    tin = [0] * N
+    tout = [0] * N
+    subtree_size = [0] * N
+    parent = [-1] * N
+    timer = 0
+    
+    def dfs(u, p):
+        nonlocal timer
+        timer += 1
+        tin[u] = timer
+        subtree_size[u] = 1
+        parent[u] = p
+        
+        for v in adj[u]:
+            if v != p:
+                dfs(v, u)
+                subtree_size[u] += subtree_size[v]
+                
+        tout[u] = timer
+        
+    dfs(A, -1)
+    
+    def is_ancestor(u, v):
+        # Returns True if u is an ancestor of v
+        return tin[u] <= tin[v] and tout[u] >= tout[v]
+        
+    # Mark the path from A to B.
+    # child_towards_B[v] stores the child of v that is an ancestor of B
+    child_towards_B = [-1] * N
+    curr = B
+    while curr != A and curr != -1:
+        p = parent[curr]
+        if p != -1:
+            child_towards_B[p] = curr
+        curr = p
+        
+    MOD = 10**9 + 7
+    K = 0
+    total_sum = 0
+    
+    for _ in range(Q):
+        u_raw = int(input_data[idx])
+        v_raw = int(input_data[idx+1])
+        idx += 2
+        
+        U = (u_raw + K) % N
+        V = (v_raw + K) % N
+        
+        ans = 0
+        
+        # Sub_A(U) is the standard subtree of U.
+        # Now determine Sub_B(V)
+        if is_ancestor(V, B):
+            if V == B:
+                # Sub_B(V) is the whole tree. Intersection is just Sub_A(U).
+                ans = subtree_size[U]
+            else:
+                W = child_towards_B[V]
+                # Sub_B(V) is Whole Tree \ Sub_A(W).
+                # Intersection = Sub_A(U) \cap (Whole \ Sub_A(W))
+                if is_ancestor(U, W):
+                    ans = subtree_size[U] - subtree_size[W]
+                elif is_ancestor(W, U):
+                    ans = 0
+                else:
+                    ans = subtree_size[U]
+        else:
+            # Sub_B(V) is the standard subtree of V.
+            # Intersection of Sub_A(U) and Sub_A(V)
+            if is_ancestor(U, V):
+                ans = subtree_size[V]
+            elif is_ancestor(V, U):
+                ans = subtree_size[U]
+            else:
+                ans = 0
+                
+        K = ans
+        total_sum = (total_sum + ans) % MOD
+        
+    print(total_sum)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 2322: Minimum Score After Removals on a Tree (Hard)
+Why it's similar: This problem teaches you the exact Entry/Exit time (tin/tout) DFS trick used above to determine if one node is an ancestor of another in O(1) time without needing a full Lowest Common Ancestor (LCA) jump table.
+
+2. LeetCode 2096: Step-By-Step Directions From a Binary Tree Node to Another (Medium)
+Why it's similar: It focuses on stringing together paths relative to a dynamic root (or starting node) and forces you to think about how up/down relationships change when traversing away from the global root.
