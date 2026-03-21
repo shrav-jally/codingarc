@@ -1,0 +1,137 @@
+Problem Statement
+
+You have N operations. Initially, sum = 0. You are given X, Y, Z and arrays A and B.
+In the i-th operation, you MUST pick exactly one of the following:
+1. Subtract B[i] from sum.
+2. Decrease X and Y by 1, then add (A[i] * X * Y * Z) to sum.
+3. Decrease Y and Z by 1, then add (A[i] * X * Y * Z) to sum.
+
+After each operation, X, Y, and Z must remain >= 0.
+Find the maximum sum obtained after N operations modulo 10^9+7.
+
+Constraints
+1 <= N, X, Y, Z <= 10^3
+1 <= A[i], B[i] <= 10^6
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+2                                 2                                 3
+1                                 10                                3
+2                                 11                                3
+2                                 11                                3
+0                                 1                                 1
+0                                 10                                2
+10                                10                                3
+5                                 0                                 1
+                                                                    2
+                                                                    3
+
+Output: 0                         Output: 9990                      Output: 35
+
+Explanation:                      Explanation:                      Explanation:
+N=2, X=1, Y=2, Z=2                N=2, X=10, Y=11, Z=11             N=3, X=Y=Z=3
+A=[0, 0], B=[10, 5]               A=[1, 10], B=[10, 0]              A=[1,2,3], B=[1,2,3]
+
+Op 1 (Type 2):                    Op 1 (Type 1):                    Op 1 (Type 1):
+X=0, Y=1, Z=2. Sum += 0           Sum -= 10 -> Sum = -10            Sum -= 1 -> Sum = -1
+Op 2 (Type 3):                    Op 2 (Type 3):                    Op 2 (Type 2):
+X=0, Y=0, Z=1. Sum += 0           X=10, Y=10, Z=10                  X=2, Y=2, Z=3
+Max Sum = 0.                      Sum += 10*10*10*10 = 10000        Sum += 2*2*2*3 = 23
+                                  Total = -10 + 10000 = 9990        Op 3 (Type 3):
+                                                                    X=2, Y=1, Z=2
+                                                                    Sum += 3*2*1*2 = 35
+
+
+Approach & Complexity
+
+This is an optimization problem over a sequence of choices, making it a classic Dynamic Programming problem.
+Let c2 be the number of Type 2 operations used so far, and c3 be the number of Type 3 operations used so far.
+The current values of the variables can be deduced purely from c2 and c3:
+curr_X = X - c2
+curr_Y = Y - c2 - c3
+curr_Z = Z - c3
+
+We can define our state as `dp(i, c2, c3)` representing the maximum sum obtainable from the i-th operation onwards.
+At each step `i`:
+- Option 1 is always valid.
+- Option 2 is valid if `curr_X > 0` and `curr_Y > 0`.
+- Option 3 is valid if `curr_Y > 0` and `curr_Z > 0`.
+
+Since i, c2, and c3 can all go up to N (1000), a 3D DP array would take O(N^3) time and space. For N=1000, 10^9 operations will likely hit a Time Limit Exceeded (TLE) in Python if done with pure recursion. We optimize this by iterating iteratively and dropping the `i` dimension, keeping only the current valid states `(c2, c3)`.
+
+Time Complexity: O(N^3). Valid states (c2+c3 <= i) reduce the constant factor to 1/6th, so it requires roughly ~1.6*10^8 operations.
+Space Complexity: O(N^2) by using two 2D grids (current row and next row) to save memory.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    X = int(input_data[1])
+    Y = int(input_data[2])
+    Z = int(input_data[3])
+    
+    A = [int(x) for x in input_data[4:N+4]]
+    B = [int(x) for x in input_data[N+4:2*N+4]]
+    
+    MOD = 10**9 + 7
+    INF = -float('inf')
+    
+    # dp[c2][c3] stores the max sum for exactly c2 (type 2) and c3 (type 3) ops
+    dp = [[INF] * (N + 1) for _ in range(N + 1)]
+    dp[0][0] = 0
+    
+    for i in range(N):
+        next_dp = [[INF] * (N + 1) for _ in range(N + 1)]
+        a_val = A[i]
+        b_val = B[i]
+        
+        for c2 in range(i + 1):
+            for c3 in range(i + 1 - c2):
+                curr_sum = dp[c2][c3]
+                if curr_sum == INF:
+                    continue
+                    
+                curr_x = X - c2
+                curr_y = Y - c2 - c3
+                curr_z = Z - c3
+                
+                # Option 1: Subtract B[i]
+                if curr_sum - b_val > next_dp[c2][c3]:
+                    next_dp[c2][c3] = curr_sum - b_val
+                    
+                # Option 2: Decrease X and Y
+                if curr_x > 0 and curr_y > 0:
+                    nx, ny = curr_x - 1, curr_y - 1
+                    gain = a_val * nx * ny * curr_z
+                    if curr_sum + gain > next_dp[c2 + 1][c3]:
+                        next_dp[c2 + 1][c3] = curr_sum + gain
+                        
+                # Option 3: Decrease Y and Z
+                if curr_y > 0 and curr_z > 0:
+                    ny, nz = curr_y - 1, curr_z - 1
+                    gain = a_val * curr_x * ny * nz
+                    if curr_sum + gain > next_dp[c2][c3 + 1]:
+                        next_dp[c2][c3 + 1] = curr_sum + gain
+                        
+        dp = next_dp
+        
+    ans = INF
+    for c2 in range(N + 1):
+        for c3 in range(N + 1):
+            if dp[c2][c3] > ans:
+                ans = dp[c2][c3]
+                
+    print(ans % MOD)
+
+if __name__ == '__main__':
+    solve()
