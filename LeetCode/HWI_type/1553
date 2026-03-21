@@ -1,0 +1,19 @@
+from functools import lru_cache
+
+class Solution:
+    def minDays(self, n: int) -> int:
+        
+        @lru_cache(None)
+        def dp(n):
+            if n <= 1:
+                return n
+            
+            # option 1: make divisible by 2
+            op1 = (n % 2) + dp(n // 2)
+            
+            # option 2: make divisible by 3
+            op2 = (n % 3) + dp(n // 3)
+            
+            return 1 + min(op1, op2)
+        
+        return dp(n)
