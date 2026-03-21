@@ -1,0 +1,123 @@
+Problem Statement
+
+General Ali has initiated an invasion in the shape of an N×M grid behind enemy lines given by a 2D array Q.
+The grid consists of cells represented by the following characters:
+1. '*': Represents a block cell that cannot be visited.
+2. 'A': Represents a cell that has been invaded by General Ali’s army.
+3. 'E': Represents a cell that contains the enemy’s army.
+
+At each second, any cell marked 'E' that shares a side with a cell marked 'A' is invaded by General Ali’s army.
+Find the minimum time it will take for General Ali’s army to invade all enemy cells ('E') in the grid. 
+If it’s not possible to invade all enemy cells, return −1.
+
+Constraints
+1 <= N <= 10^3
+1 <= M <= 10^3
+1 <= len(Q[i]) <= 10^5
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+2                                 3                                 3
+2                                 2                                 2
+AE                                AE                                AE
+EE                                *E                                **
+                                  EE                                EE
+
+Output: 2                         Output: 4                         Output: -1
+
+Explanation:                      Explanation:                      Explanation:
+N=2, M=2                          N=3, M=2                          N=3, M=2
+Q = ["AE", "EE"]                  Q = ["AE", "*E", "EE"]            Q = ["AE", "**", "EE"]
+
+Sec 1: Q=[["AA"], ["AE"]]         Sec 1: Q=[["AA"], ["*E"], ["EE"]] Sec 1: Q=[["AA"], ["**"], ["EE"]]
+Sec 2: Q=[["AA"], ["AA"]]         Sec 2: Q=[["AA"], ["*A"], ["EE"]] 
+                                  Sec 3: Q=[["AA"], ["*A"], ["AE"]] After 1 sec, Ali's army cannot 
+All 'E' cells invaded in          Sec 4: Q=[["AA"], ["*A"], ["AA"]] reach the bottom 'E' cells due 
+2 seconds.                        All 'E' cells invaded in 4 secs.  to the block cells ('*').
+                                                                    Answer is -1.
+
+(Note: Case 2 explanation adapts the original prompt's typo to reflect the actual grid logic).
+
+
+Approach & Complexity
+
+This problem is a classic Multi-Source Breadth-First Search (BFS) on a 2D grid. 
+Because the invasion spreads outwards symmetrically by 1 step every second, BFS guarantees that we find the shortest time to reach all valid cells.
+
+1. Scan the grid to find all initial 'A' positions and add them to a queue. Simultaneously, count the total number of 'E' cells.
+2. If the count of 'E' cells is 0, return 0 (no invasion needed).
+3. Perform a level-by-level BFS. For each 'A' cell popped from the queue, check its 4 neighbors (up, down, left, right).
+4. If a neighbor is 'E', turn it into 'A' (or mark it visited), decrement the 'E' count, and add the new coordinates to the queue.
+5. Increment a time counter after processing each level.
+6. Once the queue is empty, if the 'E' count is 0, return the time taken. If the 'E' count is > 0, some cells were blocked, so return -1.
+
+
+
+Time Complexity: O(N * M) because in the worst case, we visit every cell in the grid exactly once.
+Space Complexity: O(N * M) for the BFS queue and the visited array tracking.
+
+
+Python 3 Solution
+
+import sys
+from collections import deque
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    M = int(input_data[1])
+    Q = input_data[2:N+2]
+    
+    queue = deque()
+    fresh_e = 0
+    visited = [[False] * M for _ in range(N)]
+    
+    for r in range(N):
+        for c in range(M):
+            if Q[r][c] == 'A':
+                queue.append((r, c))
+                visited[r][c] = True
+            elif Q[r][c] == 'E':
+                fresh_e += 1
+                
+    if fresh_e == 0:
+        print(0)
+        return
+        
+    time = 0
+    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    
+    while queue and fresh_e > 0:
+        size = len(queue)
+        for _ in range(size):
+            r, c = queue.popleft()
+            for dr, dc in directions:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < N and 0 <= nc < M and not visited[nr][nc] and Q[nr][nc] == 'E':
+                    visited[nr][nc] = True
+                    fresh_e -= 1
+                    queue.append((nr, nc))
+        time += 1
+        
+    if fresh_e == 0:
+        print(time)
+    else:
+        print(-1)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 994: Rotting Oranges (Medium)
+Why it's similar: This is literally the exact same problem wrapped in a different story! Oranges are 'A' and 'E', and empty spaces are '*'. It is the quintessential multi-source BFS problem.
+
+2. LeetCode 286: Walls and Gates (Medium)
+Why it's similar: You start BFS from multiple "Gates" (equivalent to General Ali's starting 'A' positions) and find the shortest distance to all empty rooms while avoiding walls ('*').
