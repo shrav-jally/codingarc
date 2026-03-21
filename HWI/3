@@ -1,0 +1,118 @@
+Problem Statement
+
+You have an oil tank with a capacity of C litres that can be bought and sold by N people. 
+The people are standing in a queue are served sequentially in the order of array A.
+A[i] = 1 denotes that the person wants to sell a litre of oil.
+A[i] = -1 denotes that the person wants to buy a litre of oil.
+
+When a person wants to sell a litre of oil but the tank is full, they cannot sell it and become upset.
+When a person wants to buy a litre of oil but the tank is empty, they cannot buy it and become upset. 
+Both these cases cause disturbances. You can minimize the disturbance by filling the tank initially with a certain X litres of oil.
+Find the minimum initial amount of oil X that results in the least number of disturbances.
+
+Constraints
+1 <= N <= 10^5
+1 <= C <= 10^5
+-1 <= A[i] <= 1
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+3                                 3                                 4
+3                                 2                                 3
+-1                                -1                                1
+1                                 -1                                1
+1                                 1                                 1
+                                                                    1
+
+Output: 1                         Output: 2                         Output: 0
+
+Explanation:                      Explanation:                      Explanation:
+N=3, C=3, A=[-1, 1, 1]            N=3, C=2, A=[-1, -1, 1]           N=4, C=3, A=[1, 1, 1, 1]
+
+To avoid disturbance for          To ensure no disturbances:        Tank initially empty (X=0).
+Person 1, we need at least        We need 1 liter for Person 1.     P1 sells 1. Tank = 1.
+1 liter in the tank initially.    We need an additional 1 liter     P2 sells 1. Tank = 2.
+After P1 buys 1, tank=0.          for Person 2, making total X=2.   P3 sells 1. Tank = 3 (full).
+P2 sells 1, tank=1.               Minimum initial X = 2.            P4 sells 1. Tank is full, P4 upset.
+P3 sells 1, tank=2.                                                 Since capacity is 3, disturbance 
+Minimum initial X = 1.                                              for P4 is inevitable. Min X = 0.
+
+
+Approach & Complexity
+
+The problem asks for the minimum initial amount X in [0, C] that minimizes total disturbances.
+If we map the number of disturbances as a function of X, let's call it f(X), this function is discrete and convex.
+As X increases, disturbances from hitting the lower bound (empty tank) decrease monotonically, 
+while disturbances from hitting the upper bound (full tank) increase monotonically. 
+
+Because f(X+1) - f(X) is non-decreasing, we can find the minimum X by using Binary Search.
+We search for the first X where f(X) <= f(X+1).
+
+Time Complexity: O(N log C) because we evaluate the O(N) simulation for log(C) different values of X.
+Space Complexity: O(N) to store the array A.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    
+    N = int(input_data[0])
+    C = int(input_data[1])
+    A = [int(x) for x in input_data[2:N+2]]
+    
+    def get_disturbances(X):
+        tank = X
+        dist = 0
+        for a in A:
+            if a == 1:
+                if tank == C:
+                    dist += 1
+                else:
+                    tank += 1
+            else:
+                if tank == 0:
+                    dist += 1
+                else:
+                    tank -= 1
+        return dist
+        
+    low, high = 0, C
+    ans = 0
+    
+    while low <= high:
+        mid = (low + high) // 2
+        
+        if mid == C:
+            ans = mid
+            break
+            
+        d1 = get_disturbances(mid)
+        d2 = get_disturbances(mid + 1)
+        
+        if d1 <= d2:
+            ans = mid
+            high = mid - 1
+        else:
+            low = mid + 1
+            
+    print(ans)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 1413: Minimum Value to Get Positive Step by Step Sum (Easy)
+Why it's similar: This problem teaches the core concept of finding the optimal starting point to prevent a prefix sum sequence from breaking a specific boundary (in LeetCode's case, dropping below 1).
+
+2. LeetCode 1658: Minimum Operations to Reduce X to Zero (Medium)
+Why it's similar: While formulated differently, it tests your ability to efficiently track bounding logic over an array using sliding windows or prefix sums.
