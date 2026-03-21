@@ -1,0 +1,112 @@
+Problem Statement
+
+You have an array A of integers with n elements. There are q queries to process, each consisting of four integers: l, r, x, and y.
+For the subarray of A ranging from index l to r, you need to assign a sequence of integers for each subsequent element. 
+The sequence starts from x and increases by y. 
+A[l] = x
+A[l+1] = x + y
+A[l+i] = x + i*y (where i ranges from 0 to r - l)
+
+Each query OVERWRITES the previous values in that range.
+Find the sum of all integers in A after processing all queries modulo 10^9+7.
+
+Constraints
+1 <= n <= 10^5
+0 <= A[i] <= 10^9
+1 <= q <= 10^5
+0 <= queries[i][j] <= 10^5
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+5                                 5                                 5
+5                                 3                                 0
+5                                 9                                 1
+0                                 2                                 0
+3                                 5                                 0
+0                                 4                                 1
+5                                 5                                 5
+0 2 1 2                           1 2 6 3                           1 2 7 7
+0 1 6 5                           1 2 2 8                           0 1 3 6
+2 3 8 0                           1 2 5 5                           1 1 1 1
+2 4 9 6                           1 3 1 8                           3 4 9 1
+3 4 8 9                           1 2 2 6                           2 3 1 0
+
+Output: 51                        Output: 37                        Output: 16
+
+Explanation:                      Explanation:                      Explanation:
+A = [5, 5, 0, 3, 0]               A = [3, 9, 2, 5, 4]               A = [0, 1, 0, 0, 1]
+q1(0,2,1,2)->A=[1,3,5,3,0]        q1->A=[3,6,9,5,4]                 q1->A=[0,7,14,0,1]
+q2(0,1,6,5)->A=[6,11,5,3,0]       q2->A=[3,2,10,5,4]                q2->A=[3,9,14,0,1]
+q3(2,3,8,0)->A=[6,11,8,8,0]       q3->A=[3,5,10,5,4]                q3->A=[3,1,14,0,1]
+q4(2,4,9,6)->A=[6,11,9,15,21]     q4->A=[3,1,9,17,4]                q4->A=[3,1,14,9,10]
+q5(3,4,8,9)->A=[6,11,9,8,17]      q5->A=[3,2,11,17,4]               q5->A=[3,1,1,1,10]
+
+Sum = 6+11+9+8+17 = 51            Sum = 3+2+11+17+4 = 37            Sum = 3+1+1+1+10 = 16
+
+
+Approach & Complexity
+
+Because subsequent queries overwrite earlier ones, the final value of A[i] is entirely determined by the LAST query that updated index i. 
+If a position is never updated, it keeps its original value.
+
+We can process the queries in REVERSE order (from the last query to the first query). 
+When processing in reverse, the first time we visit an index `i`, we assign its final value and mark it as "visited". We skip it in all earlier queries.
+To do this efficiently (skipping already assigned indices without looping over them repeatedly), we use a Disjoint Set Union (DSU) data structure.
+Let `parent[i]` point to the next available (unassigned) index. When we assign a value to index `i`, we union it with `i+1` so that `parent[i] = find(i+1)`.
+
+Time Complexity: O(N + Q * alpha(N)), where alpha is the inverse Ackermann function. This is practically O(N + Q), well within the 10^5 limits.
+Space Complexity: O(N) for the DSU parent array and the final array.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    sys.setrecursionlimit(200000)
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    n = int(input_data[0])
+    A = [int(x) for x in input_data[1:n+1]]
+    q = int(input_data[n+1])
+    
+    queries = []
+    idx = n + 2
+    for _ in range(q):
+        queries.append((int(input_data[idx]), int(input_data[idx+1]), 
+                        int(input_data[idx+2]), int(input_data[idx+3])))
+        idx += 4
+        
+    parent = list(range(n + 1))
+    
+    def find(i):
+        if parent[i] == i:
+            return i
+        parent[i] = find(parent[i])
+        return parent[i]
+        
+    MOD = 10**9 + 7
+    
+    # Process queries in reverse
+    for l, r, x, y in reversed(queries):
+        curr = find(l)
+        while curr <= r:
+            # Calculate the value for this specific index
+            step = curr - l
+            val = (x + step * y) % MOD
+            A[curr] = val
+            
+            # Point to the next index
+            parent[curr] = find(curr + 1)
+            curr = parent[curr]
+            
+    total_sum = sum(A) % MOD
+    print(total_sum)
+
+if __name__ == '__main__':
+    solve()
