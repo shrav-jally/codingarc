@@ -1,0 +1,150 @@
+Problem Statement
+
+You are given an array A of length N and two functions:
+1. frequency(left, right, value): Returns the number of elements in the range [left, right] that are equal to value.
+2. distinct(left, right): Returns the number of distinct elements in the range [left, right].
+
+Find the number of pairs (i, j) where 1 <= i < j <= N that satisfy:
+frequency(1, i, A[i]) + frequency(j, N, A[j]) <= floor(distinct(1, i) / 2) + floor(distinct(j, N) / 2)
+
+Since the answer can be very large, return it modulo 10^9 + 7.
+
+Constraints
+1 <= N <= 10^5
+1 <= A[i] <= 10^9
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+5                                 5                                 5
+2                                 5                                 1
+2                                 5                                 2
+3                                 5                                 3
+1                                 5                                 4
+5                                 5                                 5
+
+Output: 2                         Output: 0                         Output: 5
+
+Explanation:                      Explanation:                      Explanation:
+N=5, A=[2, 2, 3, 1, 5]            N=5, A=[5, 5, 5, 5, 5]            N=5, A=[1, 2, 3, 4, 5]
+
+Valid pairs are:                  No pair satisfies the condition.  Valid pairs are:
+(1, 2) and (3, 4)                 Answer is 0.                      (1, 2), (1, 3), (1, 4), 
+Total pairs = 2.                  (Note: Case 2's original prompt   (1, 5), and (2, 3).
+                                  explanation had a typo copying    Total pairs = 5.
+                                  Case 1's array, but the answer 
+                                  is correct for an array of 5s).
+
+
+Approach & Complexity
+
+The inequality given is:
+freq_prefix(i) + freq_suffix(j) <= dist_prefix(i)//2 + dist_suffix(j)//2
+
+If we rearrange this mathematically to separate all `i` terms on one side and `j` terms on the other, we get:
+[ freq_prefix(i) - dist_prefix(i)//2 ] <= [ dist_suffix(j)//2 - freq_suffix(j) ]
+
+Let's define two new arrays X and Y representing these grouped terms:
+X[i] = freq_prefix(i) - dist_prefix(i)//2
+Y[j] = dist_suffix(j)//2 - freq_suffix(j)
+
+The problem now simplifies to a classic inversion-counting style problem:
+Find all pairs (i, j) such that i < j and X[i] <= Y[j].
+
+Because N is up to 10^5, an O(N^2) brute-force nested loop will result in a Time Limit Exceeded (TLE) error. Instead, we can use a Fenwick Tree (Binary Indexed Tree) to count valid pairs efficiently.
+1. Compute the prefix arrays (X) by scanning left-to-right.
+2. Compute the suffix arrays (Y) by scanning right-to-left.
+3. Since X and Y values can be negative, we add a constant offset (e.g., 100,000) to make all values strictly positive so they can be used as indices in our Fenwick Tree.
+4. Iterate `i` backwards from N-2 down to 0.
+5. Add the `Y[i+1]` value to our Fenwick Tree.
+6. Query the Fenwick tree for the count of all numbers greater than or equal to `X[i]`. Add this count to our total.
+
+
+
+Time Complexity: O(N log MAX_VAL), where MAX_VAL is around 200,000 (due to our offset). Practically, this is O(N log N).
+Space Complexity: O(N) for the prefix/suffix arrays and the Fenwick tree array.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    A = [int(x) for x in input_data[1:N+1]]
+    
+    # Pre-calculate X[i]
+    X = [0] * N
+    freq_map = {}
+    distinct_count = 0
+    for i in range(N):
+        val = A[i]
+        freq_map[val] = freq_map.get(val, 0) + 1
+        if freq_map[val] == 1:
+            distinct_count += 1
+        X[i] = freq_map[val] - (distinct_count // 2)
+        
+    # Pre-calculate Y[j]
+    Y = [0] * N
+    freq_map.clear()
+    distinct_count = 0
+    for j in range(N - 1, -1, -1):
+        val = A[j]
+        freq_map[val] = freq_map.get(val, 0) + 1
+        if freq_map[val] == 1:
+            distinct_count += 1
+        Y[j] = (distinct_count // 2) - freq_map[val]
+        
+    # Fenwick Tree / BIT setup
+    # X and Y can range from roughly -100,000 to +100,000
+    OFFSET = 100005
+    MAX_VAL = 200010
+    bit = [0] * (MAX_VAL + 1)
+    
+    def add(idx, val):
+        while idx <= MAX_VAL:
+            bit[idx] += val
+            idx += idx & (-idx)
+            
+    def query(idx):
+        s = 0
+        while idx > 0:
+            s += bit[idx]
+            idx -= idx & (-idx)
+        return s
+
+    ans = 0
+    MOD = 10**9 + 7
+    
+    # Iterate backwards to dynamically maintain the suffix elements (Y) available to current X[i]
+    for i in range(N - 2, -1, -1):
+        j = i + 1
+        y_val = Y[j] + OFFSET
+        add(y_val, 1)
+        
+        x_val = X[i] + OFFSET
+        
+        # We need elements in BIT that are >= x_val.
+        # This is Total elements in BIT - elements < x_val
+        cnt = query(MAX_VAL) - query(x_val - 1)
+        ans = (ans + cnt) % MOD
+        
+    print(ans)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 315: Count of Smaller Numbers After Self (Hard)
+Why it's similar: This is the definitive foundational problem for counting pairs (i, j) where i < j and A[i] > A[j]. Mastering it guarantees you know exactly how to use Merge Sort or a Fenwick Tree to count bounded pairs in O(N log N) time.
+
+2. LeetCode 493: Reverse Pairs (Hard)
+Why it's similar: This requires solving i < j where A[i] > 2 * A[j]. This perfectly mirrors the mathematical rearrangement skill you had to perform in this Infosys question to separate the terms before putting them into a Fenwick tree!
