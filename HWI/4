@@ -1,0 +1,91 @@
+Problem Statement
+
+General Ali has devised a strategic game to reduce an enemy army of N soldiers to just 1 soldier using a minimal number of moves.
+The game allows the following three types of moves:
+1. Reduce the enemy army by 1 soldier.
+2. Reduce the enemy army by half of its current soldiers, rounding down to the nearest integer.
+3. Reduce the enemy army by two-thirds of its current soldiers, rounding down to the nearest integer.
+
+Each move must ensure that the resulting number of soldiers is an integer.
+Find the minimum number of moves required to reduce enemy army to just 1 soldier.
+
+Constraints
+1 <= N <= 10^9
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2
+------                            ------
+Input:                            Input:
+5                                 1
+
+Output: 3                         Output: 0
+
+Explanation:                      Explanation:
+Given N = 5.                      Given N = 1.
+Move 1: Reduce by 1 (5 -> 4)      There is only 1 soldier already.
+Move 2: Reduce by half (4 -> 2)   No moves are required.
+Move 3: Reduce by half (2 -> 1)
+Total moves = 3.                  Total moves = 0.
+
+
+Approach & Complexity
+
+The phrasing "ensure the resulting number is an integer" implies that the division operations are only valid when N is perfectly divisible by 2 or 3. 
+- Reducing BY half means subtracting N/2, leaving N/2.
+- Reducing BY two-thirds means subtracting 2N/3, leaving N/3. 
+This means our possible moves from N are: go to N-1, go to N/2 (if N%2==0), or go to N/3 (if N%3==0).
+
+Because N can be up to 10^9, evaluating step-by-step using a standard Breadth-First Search (BFS) or dynamic programming array will cause a Time Limit Exceeded (TLE) or Memory Limit Exceeded (MLE) error.
+Instead, we use Recursion with Memoization. Rather than subtracting 1 blindly, we optimally calculate the exact number of subtractions needed to reach the next multiple of 2 or 3:
+- To reach a state where we can divide by 2, it takes (N % 2) subtraction moves, plus 1 move to do the division.
+- To reach a state where we can divide by 3, it takes (N % 3) subtraction moves, plus 1 move to do the division.
+
+Time Complexity: O(log N) due to the heavy reduction at each recursive step dividing N by 2 or 3.
+Space Complexity: O(log N) for the recursion stack and memoization dictionary.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    memo = {1: 0}
+    
+    def get_min_moves(n):
+        if n <= 1:
+            return 0
+        if n in memo:
+            return memo[n]
+            
+        # Option 1: Subtract until divisible by 2, then divide by 2
+        res = (n % 2) + 1 + get_min_moves(n // 2)
+        
+        # Option 2: Subtract until divisible by 3, then divide by 3
+        # (We add a condition to prevent passing 0 to the recursive function when n=2)
+        if (n // 3) > 0:
+            res = min(res, (n % 3) + 1 + get_min_moves(n // 3))
+        else:
+            res = min(res, n - 1)
+            
+        memo[n] = res
+        return res
+        
+    print(get_min_moves(N))
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 1553: Minimum Number of Days to Eat N Oranges (Hard)
+Why it's similar: This is essentially the exact same problem! The constraints and mathematical translations (eating 2/3 leaves 1/3) are identical. Practicing this guarantees you fully understand the N % 2 and N % 3 memoization optimization trick.
+
+2. LeetCode 397: Integer Replacement (Medium)
+Why it's similar: A classic variation of reducing N to 1, where operations involve N/2, N+1, or N-1. It reinforces when to optimally divide versus when to step linearly.
