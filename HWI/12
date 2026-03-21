@@ -1,0 +1,161 @@
+Problem Statement
+
+Bob is playing a game called "Some Help".
+In this game, there are N soldiers, where N is an even number. There are also N treasure chests, each with a bonus value given by the array Bonus.
+The power of each soldier is described by an array A of size N. For each i, the power of the ith soldier is an integer between 1 and N/2, and each number between 1 and N/2 occurs exactly twice in A.
+
+The game has N rounds and each round proceeds as follows for the i-th player:
+1. Find the first player on their right (index R > i) whose power is a multiple of the power of the ith player (A[R] % A[i] == 0).
+2. If no such player R is found, do nothing.
+3. If such a player R is found, Bob can choose a chest in the range [i, R] that gives the maximum bonus.
+4. The total XP is initially zero and for each successful round it is increased by this maximum bonus.
+
+Find the total XP that Bob can obtain from all N rounds.
+
+Constraints
+1 <= N <= 10^5
+1 <= A[i] <= 10^5
+1 <= Bonus[i] <= 10^5
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+4                                 6                                 4
+1                                 1                                 1
+1                                 2                                 1
+2                                 3                                 2
+2                                 1                                 2
+4                                 2                                 16
+8                                 3                                 8
+2                                 4                                 4
+1                                 2                                 2
+                                  1
+                                  4
+                                  5
+                                  9
+
+Output: 18                        Output: 23                        Output: 28
+
+Explanation:                      Explanation:                      Explanation:
+N=4, A=[1, 1, 2, 2]               N=6, A=[1, 2, 3, 1, 2, 3]         N=4, A=[1, 1, 2, 2]
+Bonus=[4, 8, 2, 1]                Bonus=[4, 2, 1, 4, 5, 9]          Bonus=[16, 8, 4, 2]
+
+1st(1): R is 2nd(1)               1st(1): R is 2nd(2)               1st(1): R is 2nd(1)
+Max Bonus[1..2] = max(4,8)=8      Max Bonus[1..2] = max(4,2)=4      Max Bonus[1..2] = max(16,8)=16
+
+2nd(1): R is 3rd(2)               2nd(2): R is 5th(2)               2nd(1): R is 3rd(2)
+Max Bonus[2..3] = max(8,2)=8      Max Bonus[2..5] = max(2..5)=5     Max Bonus[2..3] = max(8,4)=8
+
+3rd(2): R is 4th(2)               3rd(3): R is 6th(3)               3rd(2): R is 4th(2)
+Max Bonus[3..4] = max(2,1)=2      Max Bonus[3..6] = max(1..9)=9     Max Bonus[3..4] = max(4,2)=4
+
+4th(2): No valid R to right.      4th(1): R is 5th(2)               4th(2): No valid R to right.
+                                  Max Bonus[4..5] = max(4,5)=5
+Total XP = 8 + 8 + 2 = 18                                           Total XP = 16 + 8 + 4 = 28
+                                  Total XP = 4 + 5 + 9 + 5 = 23
+                                  (Note: The original text for 
+                                  Case 2 had a typo in the steps 
+                                  but the math matches this logic!)
+
+
+Approach & Complexity
+
+This problem consists of two distinct challenges:
+1. Finding the nearest right multiple efficiently.
+2. Finding the maximum bonus in a specific range efficiently.
+
+Part 1: Nearest Right Multiple
+A naive search to the right takes O(N^2) time. However, the problem states that maximum power is N/2. 
+If we iterate through the array from right to left (N-1 down to 0), we can maintain an array `closest[v]` that stores the most recently seen index of value `v`.
+For the current soldier `A[i]`, we check all of its multiples (A[i], 2*A[i], 3*A[i]...) up to N/2. We look up their indices in the `closest` array and take the minimum one. This minimum index is our `R`.
+Because we check multiples, the number of operations is N/1 + N/2 + N/3 ... which is the Harmonic Series. This bounds our search time to O(N log N).
+
+Part 2: Range Maximum Query (RMQ)
+Once we have `i` and `R`, we need the maximum value in `Bonus[i...R]`. 
+A Segment Tree is the perfect data structure for this. We build a segment tree over the `Bonus` array in O(N) time. Each query to find the maximum in the range will take O(log N) time.
+
+
+
+Time Complexity: O(N log N) for checking multiples + O(N log N) for Segment Tree queries -> Total: O(N log N).
+Space Complexity: O(N) to store the Segment Tree arrays and the closest tracking array.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    # Increase recursion depth for segment tree
+    sys.setrecursionlimit(200000)
+    
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    A = [int(x) for x in input_data[1:N+1]]
+    Bonus = [int(x) for x in input_data[N+1:2*N+1]]
+    
+    # Build Segment Tree for Range Maximum Queries
+    tree = [0] * (4 * N)
+    
+    def build(node, start, end):
+        if start == end:
+            tree[node] = Bonus[start]
+            return
+        mid = (start + end) // 2
+        build(2 * node, start, mid)
+        build(2 * node + 1, mid + 1, end)
+        tree[node] = tree[2 * node] if tree[2 * node] > tree[2 * node + 1] else tree[2 * node + 1]
+        
+    def query(node, start, end, l, r):
+        if start > r or end < l:
+            return -1  # Bonus values are positive
+        if start >= l and end <= r:
+            return tree[node]
+        mid = (start + end) // 2
+        p1 = query(2 * node, start, mid, l, r)
+        p2 = query(2 * node + 1, mid + 1, end, l, r)
+        return p1 if p1 > p2 else p2
+        
+    build(1, 0, N - 1)
+    
+    INF = float('inf')
+    max_val = N // 2
+    closest = [INF] * (max_val + 1)
+    
+    total_xp = 0
+    
+    # Traverse right-to-left to keep track of the closest elements to the right
+    for i in range(N - 1, -1, -1):
+        val = A[i]
+        target_R = INF
+        
+        # Check all valid multiples up to max_val (N // 2)
+        for m in range(val, max_val + 1, val):
+            if closest[m] < target_R:
+                target_R = closest[m]
+                
+        if target_R != INF:
+            # Range is inclusive [i, R]
+            max_bonus = query(1, 0, N - 1, i, target_R)
+            total_xp += max_bonus
+            
+        # Register the current value's index
+        closest[val] = i
+        
+    print(total_xp)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 239: Sliding Window Maximum (Hard)
+Why it's similar: While solved with a Monotonic Queue in O(N), this is the quintessential LeetCode problem for finding maximums over ranges. It is a fantastic testing ground for implementing your first Segment Tree just to get comfortable with Range Maximum Queries (RMQ).
+
+2. LeetCode 307: Range Sum Query - Mutable (Medium)
+Why it's similar: This is the definitive problem for learning the Segment Tree architecture. If you can build a tree that queries 'Sums' and handles updates, modifying it to query 'Maximums' (like required in this Infosys problem) takes just a few character changes.
