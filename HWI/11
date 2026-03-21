@@ -1,0 +1,155 @@
+Problem Statement
+
+You are given a permutation p of length n and an integer m. You construct a directed graph from this permutation.
+An edge exists directed from index i to index j if:
+1. p[i] < p[j] (the value at the starting node is strictly less than the value at the destination node)
+2. abs(i - j) <= k (the distance between their indices in the array is at most k)
+
+Find the minimum value of k such that the longest path of the resulting graph has a length greater than or equal to m.
+Note: The length of the path is equal to the number of nodes in that path.
+
+Constraints
+1 <= n <= 10^5
+1 <= m <= n
+1 <= p[i] <= n
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+5                                 5                                 5
+2                                 3                                 1
+1                                 1                                 1
+3                                 3                                 2
+2                                 2                                 3
+5                                 5                                 4
+4                                 4                                 5
+
+Output: 1                         Output: 2                         Output: 0
+
+Explanation:                      Explanation:                      Explanation:
+n=5, m=2                          n=5, m=3                          n=5, m=1
+p=[1, 3, 2, 5, 4]                 p=[1, 3, 2, 5, 4]                 p=[1, 2, 3, 4, 5]
+
+We need a path of length 2.       We need a path of length 3.       We need a path of length 1.
+If k >= 1, the edge between       If k >= 2, we can connect:        Any single node without 
+index 0 (val 1) and index 1       idx 0 (val 1) -> idx 2 (val 2)    edges forms a path of 
+(val 3) exists because:           Difference in idx = |0 - 2| = 2   length 1.
+1 < 3 and |0 - 1| <= 1.           idx 2 (val 2) -> idx 1 (val 3)    No edges are needed, 
+Path: 1 -> 3.                     Difference in idx = |2 - 1| = 1   so k = 0.
+Answer is 1.                      Path: 1 -> 2 -> 3.
+                                  Answer is 2.
+
+
+Approach & Complexity
+
+The problem asks for the minimum 'k' to achieve a path of at least length 'm'. Since adding a larger 'k' will strictly add more valid edges (never removing any), the maximum path length is monotonically increasing with 'k'. This implies we can use Binary Search to find the exact minimum 'k' in the range [0, n].
+
+To evaluate if a specific 'k' works (our check function):
+Because edges only go from a smaller value to a larger value (p[i] < p[j]), the graph is a Directed Acyclic Graph (DAG). Any valid path is strictly an increasing subsequence of the original array, bounded by the index distance 'k'.
+
+We can process the elements iteratively from value 1 up to value n.
+Let dp[v] be the longest valid path ending at the element with value 'v'. 
+When evaluating value 'v' at index 'i', we want to append it to the longest path that ended at some smaller value 'u' whose index 'j' is within the range [i - k, i + k].
+Because we iterate in ascending order of values, all previously processed elements are guaranteed to satisfy the p[i] < p[j] requirement! We just need to find the maximum DP value in the index range [i - k, i + k].
+
+
+To query this range efficiently, we use a Segment Tree over the array indices. For each value, we query the segment tree for the max DP value in the index window, add 1, and update the segment tree at index 'i' with this new DP value.
+
+Time Complexity: O(N log^2 N). Binary search takes O(log N) iterations. Inside, the Segment Tree processes N elements, taking O(log N) per query and update.
+Space Complexity: O(N) to store the indices and the Segment Tree array.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    n = int(input_data[0])
+    m = int(input_data[1])
+    p = [int(x) for x in input_data[2:n+2]]
+    
+    # Store the 0-based index of each value (values are 1 to n)
+    pos = [0] * (n + 1)
+    for i in range(n):
+        pos[p[i]] = i
+        
+    def check(k):
+        # Iterative Segment Tree to store max path lengths by index
+        tree = [0] * (2 * n)
+        
+        def query(l, r):
+            l += n
+            r += n + 1
+            res = 0
+            while l < r:
+                if l % 2 == 1:
+                    if tree[l] > res: res = tree[l]
+                    l += 1
+                if r % 2 == 1:
+                    r -= 1
+                    if tree[r] > res: res = tree[r]
+                l //= 2
+                r //= 2
+            return res
+            
+        def update(idx, val):
+            idx += n
+            tree[idx] = val
+            idx //= 2
+            while idx > 0:
+                # Update parent with max of left and right children
+                tree[idx] = tree[2*idx] if tree[2*idx] > tree[2*idx+1] else tree[2*idx+1]
+                idx //= 2
+                
+        # Process values in strictly increasing order
+        for v in range(1, n + 1):
+            i = pos[v]
+            
+            # Define the valid index window based on jump limit k
+            left = i - k if i - k > 0 else 0
+            right = i + k if i + k < n - 1 else n - 1
+            
+            # Find the longest path ending in this index window
+            best = query(left, right)
+            dp_v = best + 1
+            
+            # If we found a path of length m, this k is valid
+            if dp_v >= m:
+                return True
+                
+            # Place the new path length into the segment tree at index i
+            update(i, dp_v)
+            
+        return False
+
+    # Binary search over the answer space [0, n]
+    low, high = 0, n
+    ans = n
+    
+    while low <= high:
+        mid = (low + high) // 2
+        if check(mid):
+            ans = mid
+            high = mid - 1
+        else:
+            low = mid + 1
+            
+    print(ans)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 2407: Longest Increasing Subsequence II (Hard)
+Why it's similar: This is essentially the mathematical inverse of the Infosys problem! In LeetCode 2407, the array indices must be strictly increasing, and the difference between the VALUES is bounded by k. You use the exact same Segment Tree logic, just querying over a value window instead of an index window. 
+
+2. LeetCode 1649: Create Sorted Array through Instructions (Hard)
+Why it's similar: A great problem for practicing how to dynamically process an array using a Fenwick Tree or Segment Tree to count/query smaller elements within specific ranges as you build up a sequence.
