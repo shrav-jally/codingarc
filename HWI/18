@@ -1,0 +1,126 @@
+Problem Statement
+
+You want to buy food from a store. You have a scoring system that uses a unit called "taste points".
+You have N types of food. You can buy any type any number of times, as long as the total number of meals does not exceed M.
+However, you get tired of food if you buy it too often. Therefore, you get v[i] - d[i] * (t - 1) taste points when you buy the i-th type of food for the t-th time.
+Find the maximum number of taste points you can achieve.
+
+Constraints
+1 <= n <= 10^5
+1 <= m <= 10^9
+1 <= v[i] <= 10^9
+1 <= d[i] <= 10^9
+
+Sample Inputs, Outputs & Explanations
+
+Case 1                            Case 2                            Case 3
+------                            ------                            ------
+Input:                            Input:                            Input:
+1                                 2                                 3
+1                                 2                                 5
+5                                 5                                 5
+2                                 7                                 7
+                                  2                                 9
+                                  4                                 2
+                                                                    4
+                                                                    6
+
+Output: 5                         Output: 12                        Output: 27
+
+Explanation:                      Explanation:                      Explanation:
+n=1, m=1                          n=2, m=2                          n=3, m=5
+v=[5], d=[2]                      v=[5, 7], d=[2, 4]                v=[5, 7, 9], d=[2, 4, 6]
+
+You can only buy the first        You can buy 1 meal of the         We buy 2 meals of the 1st type,
+food once and get 5 taste         first type (5 pts) and 1 meal     2 of the 2nd, 1 of the 3rd:
+points.                           of the second type (7 pts).       1st type: 5 + (5 - 2)*1 = 8
+                                  Total = 5 + 7 = 12                2nd type: 7 + (7 - 4)*1 = 10
+                                                                    3rd type: 9 = 9
+                                                                    Total = 8 + 10 + 9 = 27
+
+
+Approach & Complexity
+
+If M was small, we could use a Max-Heap to greedily pick the best available meal one by one. However, since M can be up to 10^9, a heap approach will cause a Time Limit Exceeded (TLE) error.
+Instead, we can use Binary Search on the Answer. We want to find a threshold taste value `X` such that if we pick all meals that yield at least `X` points, we get approximately `M` meals.
+
+1. Binary search the marginal value `X` in the range [0, 10^9].
+2. For a given `X`, we can easily count how many meals of food `i` give at least `X` points: 
+   `k = (v[i] - X) // d[i] + 1` (if v[i] >= X).
+3. If the total sum of `k` across all foods is >= M, we try to push `X` higher. If it's < M, we lower `X`.
+4. Once we find the optimal `X`, we take all meals strictly greater than `X`. The total points for these can be calculated in O(1) per food type using the sum of an arithmetic progression: `Sum = k/2 * (First_Term + Last_Term)`.
+5. Finally, we fill any remaining capacity (up to M) with meals that give exactly `X` points.
+
+Time Complexity: O(N log(max_V)) where max_V is 10^9. This takes around 30 iterations of an O(N) loop, making it incredibly fast.
+Space Complexity: O(N) to store the arrays.
+
+
+Python 3 Solution
+
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    n = int(input_data[0])
+    m = int(input_data[1])
+    
+    v = [int(x) for x in input_data[2:n+2]]
+    d = [int(x) for x in input_data[n+2:2*n+2]]
+    
+    def count_meals(x):
+        # Count total meals we can buy that give >= x taste points
+        cnt = 0
+        for i in range(n):
+            if v[i] >= x:
+                cnt += (v[i] - x) // d[i] + 1
+        return cnt
+
+    low = 0
+    high = 10**9
+    best_x = 0
+    
+    # Binary search to find the cut-off taste value
+    while low <= high:
+        mid = (low + high) // 2
+        if count_meals(mid) >= m:
+            best_x = mid
+            low = mid + 1
+        else:
+            high = mid - 1
+            
+    total_taste = 0
+    meals_taken = 0
+    
+    # 1. Take all meals that give STRICTLY more than best_x taste points
+    for i in range(n):
+        if v[i] > best_x:
+            k = (v[i] - (best_x + 1)) // d[i] + 1
+            meals_taken += k
+            
+            first_term = v[i]
+            last_term = v[i] - (k - 1) * d[i]
+            total_taste += k * (first_term + last_term) // 2
+            
+    # 2. Fill the remaining capacity with meals that give EXACTLY best_x points
+    remaining_capacity = m - meals_taken
+    meals_at_best_x = count_meals(best_x) - count_meals(best_x + 1)
+    
+    take_best_x = min(remaining_capacity, meals_at_best_x)
+    total_taste += take_best_x * best_x
+    
+    print(total_taste)
+
+if __name__ == '__main__':
+    solve()
+
+
+Similar LeetCode Questions for Practice
+
+1. LeetCode 1648: Sell Diminishing-Valued Colored Balls (Medium)
+Why it's similar: This is almost exactly the same problem! You have balls (food) that decrease in value by 1 each time you pick them (where d[i] is effectively 1). It tests the exact same Binary Search on Marginal Value and Arithmetic Progression summation logic.
+
+2. LeetCode 2141: Maximum Running Time of N Computers (Hard)
+Why it's similar: Another problem where a greedy heap solution results in TLE due to massive constraints, requiring you to pivot to Binary Search on the Answer threshold.
