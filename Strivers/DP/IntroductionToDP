@@ -1,0 +1,86 @@
+class Solution:
+    # Function to calculate Fibonacci using memoization
+    def fib(self, n, dp):
+        # If base case return n
+        if n <= 1:
+            return n
+
+        # If already computed, return stored value
+        if dp[n] != -1:
+            return dp[n]
+
+        # Otherwise compute and store
+        dp[n] = self.fib(n - 1, dp) + self.fib(n - 2, dp)
+        return dp[n]
+
+# Driver
+if __name__ == "__main__":
+    n = 10
+    dp = [-1] * (n + 1)
+    sol = Solution()
+    print(sol.fib(n, dp))
+
+================================================================================================================================================================================
+
+class Solution:
+    # Function to calculate Fibonacci using tabulation
+    def fib(self, n):
+        # If n is 0 or 1, return n
+        if n <= 1:
+            return n
+
+        # Create dp array
+        dp = [0] * (n + 1)
+
+        # Initialize base cases
+        dp[0] = 0
+        dp[1] = 1
+
+        # Fill dp array iteratively
+        for i in range(2, n + 1):
+            dp[i] = dp[i - 1] + dp[i - 2]
+
+        # Return final answer
+        return dp[n]
+
+# Driver
+if __name__ == "__main__":
+    n = 10
+    sol = Solution()
+    print(sol.fib(n))
+
+================================================================================================================================================================================
+
+class Solution:
+    def fib(self, n: int) -> int:
+        # If n is 0 return 0
+        if n == 0:
+            return 0
+        # If n is 1 return 1
+        if n == 1:
+            return 1
+
+        # prev2 stores fib(n-2)
+        prev2 = 0
+        # prev stores fib(n-1)
+        prev = 1
+
+        # Loop from 2 to n
+        for i in range(2, n + 1):
+            # Calculate current fib
+            curr = prev + prev2
+            # Update prev2
+            prev2 = prev
+            # Update prev
+            prev = curr
+
+        # Return final answer
+        return prev
+
+def main():
+    s = Solution()
+    n = 10
+    print(s.fib(n))
+
+if __name__ == "__main__":
+    main()
