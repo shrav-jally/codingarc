@@ -1,0 +1,68 @@
+# Node structure for the binary tree
+class Node:,
+    def __init__(self, val):
+        self.data = val
+        self.left = None
+        self.right = None
+
+# Solution class containing the traversal function
+class Solution:
+    def preInPostTraversal(self, root):
+        pre, ino, post = [], [], []
+
+        if root is None:
+            return []
+
+        # Stack to maintain nodes and their traversal state
+        st = [(root, 1)]
+
+        while st:
+            node, state = st.pop()
+
+            # this is part of pre
+            if state == 1:
+                # Store the node's data in the preorder traversal
+                pre.append(node.data)
+                # Move to state 2 (inorder) for this node
+                st.append((node, 2))
+
+                # Push left child onto the stack for processing
+                if node.left:
+                    st.append((node.left, 1))
+
+            # this is a part of in
+            elif state == 2:
+                # Store the node's data in the inorder traversal
+                ino.append(node.data)
+                # Move to state 3 (postorder) for this node
+                st.append((node, 3))
+
+                # Push right child onto the stack for processing
+                if node.right:
+                    st.append((node.right, 1))
+
+            # this is part of post
+            else:
+                # Store the node's data in the postorder traversal
+                post.append(node.data)
+
+        # Returning the traversals
+        return [pre, ino, post]
+
+if __name__ == "__main__":
+    root = Node(1)
+    root.left = Node(2)
+    root.right = Node(3)
+    root.left.left = Node(4)
+    root.left.right = Node(5)
+
+    sol = Solution()
+    traversals = sol.preInPostTraversal(root)
+
+    pre = traversals[0]
+    ino = traversals[1]
+    post = traversals[2]
+
+    print("Preorder traversal:", *pre)
+    print("Inorder traversal:", *ino)
+    print("Postorder traversal:", *post)
