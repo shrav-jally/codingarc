@@ -1,0 +1,19 @@
+class Solution:
+    def preorderTraversalHelper(self, currentNode, result):
+        # Base case
+        if not currentNode:
+            return
+        
+        # Visit root first
+        result.append(currentNode.val)
+        
+        # Then left
+        self.preorderTraversalHelper(currentNode.left, result)
+        
+        # Then right
+        self.preorderTraversalHelper(currentNode.right, result)
+
+    def preorderTraversal(self, root):
+        result = []
+        self.preorderTraversalHelper(root, result)
+        return result
