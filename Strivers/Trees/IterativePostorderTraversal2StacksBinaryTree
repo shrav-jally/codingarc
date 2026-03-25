@@ -1,0 +1,56 @@
+# Define a TreeNode class for the binary tree
+class TreeNode:
+    def __init__(self, x):
+        self.val = x  # The value of the node
+        self.left = None  # Pointer to the left child
+        self.right = None  # Pointer to the right child
+
+# Function to perform postorder traversal of a binary tree iteratively
+def postOrder(root):
+    postorder = []  # List to store the postorder traversal result
+
+    # If the tree is empty, return an empty traversal
+    if root is None:
+        return postorder
+
+    # Two stacks for iterative traversal
+    st1 = []  # First stack
+    st2 = []  # Second stack to store nodes in postorder
+
+    # Push the root node onto the first stack
+    st1.append(root)
+
+    # Iterative traversal to populate st2 with nodes in postorder
+    while st1:
+        root = st1.pop()  # Get the top node from st1
+        st2.append(root)  # Push the node onto st2
+
+        # Push left child onto st1 if exists
+        if root.left:
+            st1.append(root.left)
+
+        # Push right child onto st1 if exists
+        if root.right:
+            st1.append(root.right)
+
+    # Populate the postorder traversal list by popping st2
+    while st2:
+        postorder.append(st2.pop().val)  # Add the node's value to the postorder result
+
+    # Return the postorder traversal result
+    return postorder
+
+# Driver code
+if __name__ == "__main__":
+    # Creating a sample binary tree
+    root = TreeNode(1)
+    root.left = TreeNode(2)
+    root.right = TreeNode(3)
+    root.left.left = TreeNode(4)
+    root.left.right = TreeNode(5)
+
+    # Getting the postorder traversal
+    result = postOrder(root)
+
+    # Displaying the postorder traversal result
+    print("Postorder traversal:", result)
