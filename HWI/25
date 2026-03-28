@@ -1,0 +1,35 @@
+DIVISIBLE SUBARRAYS
+
+PROBLEM:
+Given an array 'a' of length 'n' and an integer 'k', find the maximum number of 
+pairwise non-overlapping contiguous subarrays such that the sum of each 
+subarray is divisible by 'k'.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+n=3, k=6                        | n=3, k=3                        | n=3, k=4
+a=[1, 2, 3]                     | a=[1, 2, 3]                     | a=[1, 2, 3]
+Output: 1                       | Output: 2                       | Output: 0
+
+SOLUTION:
+import sys
+def countSubarrays(n, k, a):
+    max_good = 0
+    curr_prefix = 0
+    seen = {0}
+    for x in a:
+        curr_prefix += x
+        rem = curr_prefix % k
+        if rem in seen:
+            max_good += 1
+            curr_prefix = 0
+            seen = {0}
+        else:
+            seen.add(rem)
+    return max_good
+
+SIMILAR LEETCODE QUESTIONS:
+- 974. Subarray Sums Divisible by K
+- 523. Continuous Subarray Sum
+- 1524. Number of Sub-arrays With Odd Sum
