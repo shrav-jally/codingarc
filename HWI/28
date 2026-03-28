@@ -1,0 +1,42 @@
+RECAMÁN RANGE QUERIES
+
+PROBLEM:
+Find Range Max 'M'. Calculate Recamán distance from M (steps until repeat or 
+exceeding 10^6). Multiplier 17 if M is Fortunate (m where p# + m is prime), else 1.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+N=10, Q=6                       | N=10, Q=10                      | N=6, Q=4
+Output: 1233                    | Output: 2472                    | Output: 847
+
+SOLUTION:
+import sys
+def getSumOfAllQuery(N, A, Q, Queries):
+    def is_p(n):
+        if n < 2: return False
+        for i in range(2, int(n**0.5)+1):
+            if n % i == 0: return False
+        return True
+    forts = set()
+    p_h = 1
+    for p in [2,3,5,7,11,13,17]:
+        p_h *= p; m = 2
+        while not is_p(p_h + m): m += 1
+        if m <= 10000: forts.add(m)
+    memo = {}
+    def get_dist(M):
+        if M in memo: return memo[M]
+        curr, seen = M, {M}
+        for n in range(1, 5001):
+            nxt = curr - n
+            curr = nxt if nxt > 0 and nxt not in seen else curr + n
+            if curr in seen or curr > 1000000:
+                memo[M] = n; return n
+            seen.add(curr)
+        return 5000
+    # Range Max Logic (Segment Tree) and Query Loop omitted for brevity...
+
+SIMILAR LEETCODE QUESTIONS:
+- 307. Range Sum Query - Mutable
+- 941. Valid Mountain Array (Sequence Logic)
