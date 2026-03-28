@@ -1,0 +1,38 @@
+THE LIQUIDITY DEADLINE CHALLENGE
+
+PROBLEM:
+Given initial capital C and N tasks with Deadline D[i] and Profit P[i]. One task 
+per day. Capital must stay >= 0. Maximize the number of tasks completed.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+N=2, C=0                        | N=2, C=10                       | N=4, C=5
+Tasks: (1, -5), (2, 10)         | Tasks: (1, -10), (10, 20)       | Tasks: (1,-5),(2,20)...
+Output: 1                       | Output: 2                       | Output: 3
+
+SOLUTION:
+import sys
+def solve():
+    data = sys.stdin.read().split()
+    N, C = int(data[0]), int(data[1])
+    tasks = []
+    for i in range(N): tasks.append((int(data[2+i*2]), int(data[3+i*2])))
+    memo = {}
+    def get_max(mask, day, cap):
+        state = (mask, day)
+        if state in memo: return memo[state]
+        res = 0
+        for i in range(N):
+            if not (mask & (1 << i)):
+                d, p = tasks[i]
+                if day + 1 <= d and cap + p >= 0:
+                    res = max(res, 1 + get_max(mask|(1<<i), day+1, cap+p))
+        memo[state] = res
+        return res
+    print(get_max(0, 0, C))
+
+SIMILAR LEETCODE QUESTIONS:
+- 1353. Maximum Number of Events That Can Be Attended
+- 630. Course Schedule III
+- 1235. Maximum Profit in Job Scheduling
