@@ -1,0 +1,46 @@
+ALTERNATING WORD PARTITION
+
+PROBLEM:
+Partition string S into dictionary words such that word lengths strictly 
+alternate (Longer -> Shorter -> Longer...). Find minimum number of words.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+S="abcd", Dict=["ab","bc","cd"] | S="aaaa", Dict=["a","aa","aaa"] | S="catsanddog"...
+Output: -1                      | Output: 2                       | Output: 3
+
+SOLUTION:
+import sys
+def minPartitions(S, N, Dictionary):
+    n = len(S); w_map = {}
+    for w in Dictionary:
+        l = len(w)
+        if l not in w_map: w_map[l] = set()
+        w_map[l].add(w)
+    lens = sorted(w_map.keys()); memo = {}
+    def solve(idx, last_l, direction):
+        if idx == n: return 0
+        state = (idx, last_l, direction)
+        if state in memo: return memo[state]
+        res = float('inf')
+        for l in lens:
+            if idx + l > n: break
+            if last_l != -1:
+                if l == last_l: continue
+                if direction == 1 and l > last_l: continue
+                if direction == 0 and l < last_l: continue
+                new_dir = 0 if direction == 1 else 1
+            else: new_dir = -1
+            if S[idx:idx+l] in w_map[l]:
+                if last_l == -1:
+                    res = min(res, 1+solve(idx+l, l, 1), 1+solve(idx+l, l, 0))
+                else: res = min(res, 1+solve(idx+l, l, new_dir))
+        memo[state] = res; return res
+    ans = solve(0, -1, -1)
+    return ans if ans != float('inf') else -1
+
+SIMILAR LEETCODE QUESTIONS:
+- 139. Word Break
+- 140. Word Break II
+- 376. Wiggle Subsequence
