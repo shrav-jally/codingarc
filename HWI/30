@@ -12,22 +12,151 @@ Output: 7154                    | Output: 6320                    | Output: 7145
 
 SOLUTION:
 import sys
-sys.setrecursionlimit(10000)
+
 def getMaximumValue(N, W, T, M, Edges, K):
+    def cullen_numbers(limit):
+        s = set()
+        n = 1
+        while True:
+            val = n * (2 ** n) + 1
+            if val > limit:
+                break
+            s.add(val)
+            n += 1
+        return s
+
+    def carol_numbers(limit):
+        s = set()
+        n = 1
+        while True:
+            val = (2**n - 1)**2 - 2
+            if val > limit:
+                break
+            if val > 0:
+                s.add(val)
+            n += 1
+        return s
+
+    def kynea_numbers(limit):
+        s = set()
+        n = 1
+        while True:
+            val = (2**n + 1)**2 - 2
+            if val > limit:
+                break
+            s.add(val)
+            n += 1
+        return s
+
+    MAX_W = N * 2000 + 1
+    cullen_set = cullen_numbers(N + 10)
+    carol_set = carol_numbers(MAX_W)
+    kynea_set = kynea_numbers(2001)
+
     adj = [[] for _ in range(N)]
-    for u, v in Edges: adj[u].append(v); adj[v].append(u)
-    cullen = {n*(2**n)+1 for n in range(1,15)}
-    carol = {((2**n)-1)**2-2 for n in range(1,15)}
-    dp = [[{} for _ in range(2)] for _ in range(N)]
-    def dfs(u, p):
-        dp[u][1][1] = W[u]; dp[u][0][0] = 0
-        for v in adj[u]:
-            if v == p: continue
-            dfs(v, u)
-            n_dp0, n_dp1 = {}, {}
-            # Standard Tree MWIS Logic with Size tracking
-            # ... merging dictionaries ...
-    # Scoring logic with Cullen/Carol/Kynea checks...
+    for u, v in Edges:
+        adj[u].append(v)
+        adj[v].append(u)
+
+    root = 0
+    parent = [-1] * N
+    order = []
+    visited = [False] * N
+    stack = [root]
+    visited[root] = True
+    while stack:
+        node = stack.pop()
+        order.append(node)
+        for nb in adj[node]:
+            if not visited[nb]:
+                visited[nb] = True
+                parent[nb] = node
+                stack.append(nb)
+
+    children = [[] for _ in range(N)]
+    for node in order:
+        if parent[node] != -1:
+            children[parent[node]].append(node)
+
+    dp = [[None, None] for _ in range(N)]
+
+    for node in reversed(order):
+        w = W[node]
+        is_kynea = 1 if w in kynea_set else 0
+
+        if not children[node]:
+            dp[node][0] = {(0, 0): 0}
+            dp[node][1] = {(1, is_kynea): w}
+        else:
+            not_taken = {(0, 0): 0}
+            taken = {(1, is_kynea): w}
+
+            for child in children[node]:
+                new_not = {}
+                for (c1, k1), w1 in not_taken.items():
+                    for ctaken in [0, 1]:
+                        for (c2, k2), w2 in dp[child][ctaken].items():
+                            key = (c1 + c2, k1 + k2)
+                            val = w1 + w2
+                            if key not in new_not or new_not[key] < val:
+                                new_not[key] = val
+                not_taken = new_not
+
+                new_tak = {}
+                for (c1, k1), w1 in taken.items():
+                    for (c2, k2), w2 in dp[child][0].items():
+                        key = (c1 + c2, k1 + k2)
+                        val = w1 + w2
+                        if key not in new_tak or new_tak[key] < val:
+                            new_tak[key] = val
+                taken = new_tak
+
+            dp[node][0] = not_taken
+            dp[node][1] = taken
+
+    # THIS BLOCK must be inside getMaximumValue — check indentation carefully
+    all_states = {}
+    for taken in [0, 1]:
+        for (cnt, kynea_cnt), wsum in dp[root][taken].items():
+            key = (cnt, kynea_cnt)
+            if key not in all_states or all_states[key] < wsum:
+                all_states[key] = wsum
+
+    best = float('-inf')
+    for (cnt, kynea_cnt), wsum in all_states.items():
+        if cnt == 0:
+            continue
+        score = wsum
+        if cnt in cullen_set:
+            score += 40 * cnt
+        if wsum in carol_set:
+            score -= 35
+        if kynea_cnt > K / 2:
+            score = score * 0.85
+        if score > best:
+            best = score
+
+    return int(best) if best != float('-inf') else 0  # ← must be inside function
+
+
+def main():
+    N = int(sys.stdin.readline().strip())
+    W = []
+    for _ in range(N):
+        W.append(int(sys.stdin.readline().strip()))
+    T = []
+    for _ in range(N):
+        T.append(int(sys.stdin.readline().strip()))
+    M = int(sys.stdin.readline().strip())
+    Edges = []
+    for _ in range(M):
+        Edges.append(list(map(int, sys.stdin.readline().strip().split())))
+    K = int(sys.stdin.readline().strip())
+    result = getMaximumValue(N, W, T, M, Edges, K)
+    print(result)
+
+if __name__ == "__main__":
+    main()
 
 SIMILAR LEETCODE QUESTIONS:
 - 337. House Robber III
