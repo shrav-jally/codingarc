@@ -1,0 +1,35 @@
+CULLEN TREE SELECTION
+
+PROBLEM:
+Select Independent Set of nodes in a tree to maximize value. 
+Bonuses: Cullen count (|S|), Carol Penalty (Total Val), Kynea Penalty.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+N=9, K=1                        | N=9, K=1                        | N=10, K=3
+Output: 7154                    | Output: 6320                    | Output: 7145
+
+SOLUTION:
+import sys
+sys.setrecursionlimit(10000)
+def getMaximumValue(N, W, T, M, Edges, K):
+    adj = [[] for _ in range(N)]
+    for u, v in Edges: adj[u].append(v); adj[v].append(u)
+    cullen = {n*(2**n)+1 for n in range(1,15)}
+    carol = {((2**n)-1)**2-2 for n in range(1,15)}
+    dp = [[{} for _ in range(2)] for _ in range(N)]
+    def dfs(u, p):
+        dp[u][1][1] = W[u]; dp[u][0][0] = 0
+        for v in adj[u]:
+            if v == p: continue
+            dfs(v, u)
+            n_dp0, n_dp1 = {}, {}
+            # Standard Tree MWIS Logic with Size tracking
+            # ... merging dictionaries ...
+    # Scoring logic with Cullen/Carol/Kynea checks...
+
+SIMILAR LEETCODE QUESTIONS:
+- 337. House Robber III
+- 968. Binary Tree Cameras
+- 1373. Maximum Sum BST in Binary Tree
