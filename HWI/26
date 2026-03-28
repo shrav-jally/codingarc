@@ -1,0 +1,53 @@
+POULET QUERIES
+
+PROBLEM:
+Manage an array 'A' with Updates and Range Max Queries. For each query, find 
+Max value 'M' in A[L...R]. Count Poulet numbers (composite n where 2^(n-1) ≡ 1 mod n) 
+<= M. Multiply count by 21 if M is a Factorion, else 1. Add 100 if M is Poulet.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+N=10, Q=5                       | N=10, Q=5                       | N=5, Q=4
+A=[41996, 2525...]              | A=[44508, 6536...]              | A=[561, 145...]
+Output: 256                     | Output: 191                     | Output: 204
+
+SOLUTION:
+import sys
+def getSumOfAllQuery(N, A, Q, Queries):
+    def is_p(n):
+        if n < 2: return False
+        for i in range(2, int(n**0.5)+1):
+            if n % i == 0: return False
+        return True
+    def is_poulet(n):
+        return n > 1 and not is_p(n) and pow(2, n-1, n) == 1
+    def is_fact(n):
+        f = [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880]
+        return n > 0 and n == sum(f[int(d)] for d in str(n))
+    poulets = [i for i in range(50001) if is_poulet(i)]
+    tree = [0]*(2*N)
+    for i in range(N): tree[N+i] = A[i]
+    for i in range(N-1,0,-1): tree[i] = max(tree[i<<1], tree[i<<1|1])
+    ans = 0
+    for q in Queries:
+        if q[0] == 0:
+            i, v = q[1], q[2]; i += N; tree[i] = v
+            while i > 1: tree[i>>1] = max(tree[i], tree[i^1]); i >>= 1
+        else:
+            l, r = q[1]+N, q[2]+N+1; m_val = 0
+            while l < r:
+                if l&1: m_val = max(m_val, tree[l]); l += 1
+                if r&1: r -= 1; m_val = max(m_val, tree[r])
+                l >>= 1; r >>= 1
+            import bisect
+            cnt = bisect.bisect_right(poulets, m_val)
+            score = cnt * (21 if is_fact(m_val) else 1)
+            if is_poulet(m_val): score += 100
+            ans += score
+    return ans
+
+SIMILAR LEETCODE QUESTIONS:
+- 307. Range Sum Query - Mutable
+- 204. Count Primes
+- 239. Sliding Window Maximum
