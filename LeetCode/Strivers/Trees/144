@@ -1,19 +1,33 @@
 class Solution:
     def preorderTraversalHelper(self, currentNode, result):
-        # Base case
         if not currentNode:
             return
-        
-        # Visit root first
         result.append(currentNode.val)
-        
-        # Then left
         self.preorderTraversalHelper(currentNode.left, result)
-        
-        # Then right
         self.preorderTraversalHelper(currentNode.right, result)
 
     def preorderTraversal(self, root):
         result = []
         self.preorderTraversalHelper(root, result)
+        return result
+
+
+class Solution:
+    def preorderTraversal(self, root):
+        if not root:
+            return []
+        
+        stack = [root]
+        result = []
+        
+        while stack:
+            node = stack.pop()
+            result.append(node.val)
+            
+            # Push right first, so left is processed first
+            if node.right:
+                stack.append(node.right)
+            if node.left:
+                stack.append(node.left)
+        
         return result
