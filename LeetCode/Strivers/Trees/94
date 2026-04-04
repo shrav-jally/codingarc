@@ -18,3 +18,17 @@ class Solution:
             res.append(curr.val)
             curr = curr.right
         return res 
+
+
+class Solution:
+    def inorderTraversalHelper(self, currentNode, result):
+        if not currentNode:
+            return
+        self.inorderTraversalHelper(currentNode.left, result)
+        result.append(currentNode.val)
+        self.inorderTraversalHelper(currentNode.right, result)
+
+    def inorderTraversal(self, root):
+        result = []
+        self.inorderTraversalHelper(root, result)
+        return result
