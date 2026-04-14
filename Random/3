@@ -1,0 +1,12 @@
+# determine if a string is a valid representation of a number or not
+
+str=input()
+try:
+    num=int(str)
+    print('integer')
+except:
+    try:
+        num=float(str)
+        print('decimal')
+    except:
+        print('not number')
