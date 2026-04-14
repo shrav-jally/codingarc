@@ -1,0 +1,10 @@
+# reverse string and find whether it's a palindrome or not
+
+words = list(map(str, input().split()))
+new = words[::-1]
+original = ''.join(words)
+reversed_str = ''.join(new)
+if original == reversed_str:
+    print('palindrome')
+else:
+    print('not')
