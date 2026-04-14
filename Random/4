@@ -1,0 +1,13 @@
+o    o
+oo  oo
+oooooo
+oo  oo
+o    o
+
+# print butterfly pattern
+
+n = int(input())
+for i in range(1, n + 1):
+    print('o' * i + ' ' * (2 * (n - i)) + 'o' * i)
+for i in range(n - 1, 0, -1):
+    print('o' * i + ' ' * (2 * (n - i)) + 'o' * i)
