@@ -1,0 +1,7 @@
+# determine palindrome/ not irrespective of case
+
+str=input().lower()
+if str==str[::-1]:
+    print('palindrome')
+else:
+    print('not')
