@@ -1,0 +1,82 @@
+EASY: FOOD STAMPS
+
+PROBLEM:
+You have N types of food and can buy up to M meals in total. 
+The i-th type of food gives v[i] - d[i] * (t - 1) taste points for the t-th 
+time you buy it. Find the maximum number of taste points you can achieve 
+without exceeding M total meals.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+1                               | 2                               | 3
+1                               | 2                               | 5
+5                               | 5                               | 5
+2                               | 7                               | 7
+                                | 2                               | 9
+                                | 4                               | 2
+                                |                                 | 4
+                                |                                 | 6
+Output: 5                       | Output: 12                      | Output: 27
+
+SOLUTION:
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    n = int(input_data[0])
+    m = int(input_data[1])
+    
+    v = [int(x) for x in input_data[2:n+2]]
+    d = [int(x) for x in input_data[n+2:2*n+2]]
+    
+    # Binary Search to find the lowest marginal taste score we are willing to accept.
+    # We want to find the highest threshold where the number of available meals >= m.
+    low, high = 1, max(v)
+    threshold = 0
+    
+    def count_meals(mid):
+        count = 0
+        for i in range(n):
+            if v[i] >= mid:
+                count += (v[i] - mid) // d[i] + 1
+        return count
+        
+    while low <= high:
+        mid = (low + high) // 2
+        if count_meals(mid) >= m:
+            threshold = mid
+            low = mid + 1
+        else:
+            high = mid - 1
+            
+    total_taste = 0
+    meals_taken = 0
+    
+    # First, greedily take all meals strictly greater than our threshold
+    for i in range(n):
+        if v[i] > threshold:
+            # Number of meals we can take that yield > threshold
+            t = (v[i] - threshold - 1) // d[i] + 1
+            meals_taken += t
+            # Sum of Arithmetic Progression: t * v[i] - d[i] * (t * (t - 1)) / 2
+            total_taste += t * v[i] - d[i] * t * (t - 1) // 2
+            
+    # We may still have space left up to M. Fill the remainder with meals 
+    # that exactly equal the threshold score.
+    if threshold > 0:
+        remaining = min(m - meals_taken, count_meals(threshold) - meals_taken)
+        total_taste += remaining * threshold
+        
+    print(total_taste)
+
+if __name__ == "__main__":
+    solve()
+
+SIMILAR LEETCODE QUESTIONS:
+- 1642. Furthest Building You Can Reach
+- 1011. Capacity To Ship Packages Within D Days
+- 2141. Maximum Running Time of N Computers
