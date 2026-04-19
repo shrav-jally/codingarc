@@ -1,0 +1,54 @@
+HARD: LOCK & PARITY
+
+PROBLEM:
+Assign keys 'j' to locks 'i' such that j < i and L[j] != L[i]. 
+Cost of assignment = |L[j] - L[i]|. 
+Condition: even assignments >= odd assignments in the final set.
+Find minimum possible sum of effective values over all valid assignment sets. 
+If no valid set, output -1.
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+6                               | 6                               | 6
+41                              | 45                              | 6
+54                              | 6                               | 59
+15                              | 38                              | 1
+4                               | 6                               | 25
+54                              | 15                              | 59
+4                               | 38                              | 50
+Output: 26                      | Output: 30                      | Output: 24
+
+SOLUTION:
+import sys
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+        
+    N = int(input_data[0])
+    L = [int(x) for x in input_data[1:N+1]]
+    
+    min_cost = float('inf')
+    
+    for i in range(N):
+        for j in range(i + 1, N):
+            diff = abs(L[i] - L[j])
+            
+            if diff > 0 and diff % 2 == 0:
+                if diff < min_cost:
+                    min_cost = diff
+                    
+    if min_cost == float('inf'):
+        print("-1")
+    else:
+        print(min_cost)
+
+if __name__ == "__main__":
+    solve()
+
+SIMILAR LEETCODE QUESTIONS:
+- 1200. Minimum Absolute Difference
+- 532. K-diff Pairs in an Array
+- 2006. Count Number of Pairs With Absolute Difference K
