@@ -1,0 +1,67 @@
+MEDIUM: MSS WITH SWAPS
+
+PROBLEM:
+Given array 'a' of length 'n' and integer 'k', find the maximum possible 
+subarray sum (MSS) after performing exactly 'k' swaps between any two elements. 
+(Swapping the same pair twice cancels out, so exactly k swaps means at most k 
+useful swaps).
+
+SAMPLE TEST CASES:
+Case 1                          | Case 2                          | Case 3
+Input:                          | Input:                          | Input:
+3                               | 3                               | 3
+1                               | 0                               | 0
+1                               | 5                               | 1
+-5                              | -1                              | -5
+2                               | 5                               | 2
+Output: 3                       | Output: 9                       | Output: 2
+
+SOLUTION:
+import sys
+import bisect
+
+def solve():
+    input_data = sys.stdin.read().split()
+    if not input_data:
+        return
+    
+    n = int(input_data[0])
+    k = int(input_data[1])
+    A = [int(x) for x in input_data[2:n+2]]
+    
+    sorted_A = sorted([(v, i) for i, v in enumerate(A)], reverse=True)
+    max_sum = -float('inf')
+    
+    for i in range(n):
+        cur_inside = []
+        current_sum = 0
+        for j in range(i, n):
+            bisect.insort(cur_inside, A[j])
+            current_sum += A[j]
+            
+            temp_sum = current_sum
+            swaps = 0
+            
+            for val, idx in sorted_A:
+                if swaps == k or swaps == len(cur_inside): 
+                    break
+                
+                if not (i <= idx <= j):
+                    if val > cur_inside[swaps]:
+                        temp_sum += val - cur_inside[swaps]
+                        swaps += 1
+                    else:
+                        break
+                        
+            if temp_sum > max_sum:
+                max_sum = temp_sum
+                
+    print(max_sum)
+
+if __name__ == "__main__":
+    solve()
+
+SIMILAR LEETCODE QUESTIONS:
+- 53. Maximum Subarray
+- 1746. Maximum Subarray Sum After One Operation
+- 1191. K-Concatenation Maximum Sum
