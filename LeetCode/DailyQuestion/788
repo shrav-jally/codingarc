@@ -1,16 +1,17 @@
-def rotatedDigits(n: int) -> int:
-    valid = {0, 1, 2, 5, 6, 8, 9}
-    change = {2, 5, 6, 9}
-    
-    count = 0
-    
-    for num in range(1, n + 1):
-        digits = list(map(int, str(num)))
+class Solution:
+    def rotatedDigits(self, n: int) -> int:
+        valid = {0, 1, 2, 5, 6, 8, 9}
+        change = {2, 5, 6, 9}
         
-        if any(d not in valid for d in digits):
-            continue
+        count = 0
         
-        if any(d in change for d in digits):
-            count += 1
-    
-    return count
+        for num in range(1, n + 1):
+            digits = list(map(int, str(num)))
+            
+            if any(d not in valid for d in digits):
+                continue
+            
+            if any(d in change for d in digits):
+                count += 1
+        
+        return count
