@@ -1,0 +1,25 @@
+from collections import deque
+from typing import List
+
+class Solution:
+    def canReach(self, arr: List[int], start: int) -> bool:
+        n = len(arr)
+        queue = deque([start])
+        visited = set([start])
+
+        while queue:
+            i = queue.popleft()
+
+            # If we reach a value of 0, return True
+            if arr[i] == 0:
+                return True
+
+            # Possible next positions
+            next_positions = [i + arr[i], i - arr[i]]
+
+            for nxt in next_positions:
+                if 0 <= nxt < n and nxt not in visited:
+                    visited.add(nxt)
+                    queue.append(nxt)
+
+        return False
