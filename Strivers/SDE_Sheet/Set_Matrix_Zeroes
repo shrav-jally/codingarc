@@ -1,0 +1,23 @@
+# bruteforce
+
+m=int(input())
+matrix=[]
+for i in range(m):
+    row=list(map(int, input().split()))
+    matrix.append(row)
+print(matrix)
+a=[]
+n=len(matrix)
+for i in range(len(matrix)):
+    for j in range(len(matrix)):
+        if matrix[i][j]==0:
+            a.append([i, j])
+for i,j in a:
+    for k in range(n):
+        matrix[k][j]=0
+    for k in range(n):
+        matrix[i][k]=0
+print(matrix)
+
+# optimal
+
