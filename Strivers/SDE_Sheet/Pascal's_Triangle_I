@@ -1,0 +1,12 @@
+# brute force
+
+m=int(input())
+pascal=[[1]]
+for i in range(1, m):
+    row=[1]*(i+1)
+    for k in range(1, len(row)-1):
+        row[k]=pascal[i-1][k-1]+pascal[i-1][k]
+    pascal.append(row)
+print(pascal)
+
+# optimal
