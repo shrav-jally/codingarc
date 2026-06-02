@@ -1,0 +1,20 @@
+# brute force
+
+arr = list(map(int, input().split()))
+
+def sum(a):
+    s=0
+    for i in a:
+        s+=i
+    return s
+    
+temp=0
+for i in range(len(arr)):
+    for j in range(i, len(arr)):
+        temparr=[]
+        for k in range(i, j):
+            temparr.append(arr[k])
+            temp=max(temp, sum(temparr))
+print(temp)
+
+# optimal
