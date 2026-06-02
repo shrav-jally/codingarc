@@ -1,0 +1,17 @@
+# brute force
+
+from itertools import permutations
+
+num_str = input()
+arr = list(num_str)
+all_perms = sorted(list(set(permutations(arr))))
+current = tuple(arr)
+idx = all_perms.index(current)
+
+if idx == len(all_perms) - 1:
+    print("".join(all_perms[0]))
+else:
+    print("".join(all_perms[idx + 1]))
+
+
+# optimized  
