@@ -5,7 +5,7 @@ class Solution:
                 if nums[i] + nums[j] == target:
                     return [i, j]
 
-
+# this one doesn't return indices it returns values so technically doesn't work on leetcode
 class Solution:
     def twoSum(self, nums):
         s = set()
