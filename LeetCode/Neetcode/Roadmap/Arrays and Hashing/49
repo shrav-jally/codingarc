@@ -28,3 +28,21 @@ class Solution:
                 lst.append([word])
 
         return lst
+
+
+
+class Solution:
+    def groupAnagrams(self, strs):
+        d = {}
+
+        for word in strs:
+            temp = list(word)
+            temp.sort()
+            key = "".join(temp)
+
+            if key not in d:
+                d[key] = []
+
+            d[key].append(word)
+
+        return list(d.values())
