@@ -1,3 +1,14 @@
 class Solution:
     def containsDuplicate(self, nums):
         return len(nums) != len(set(nums))
+
+
+class Solution:
+    def containsDuplicate(self, nums):
+        seen={}
+        for i in range(len(nums)):
+            if nums[i] in seen:
+                return True
+            else:
+                seen[nums[i]]=i
+        return False
