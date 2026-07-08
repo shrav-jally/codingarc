@@ -17,3 +17,24 @@ class Solution:
                     count += 1
 
         return count
+
+
+
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        count = 0
+        prefix = 0
+        mp = {0: 1}
+
+        for num in nums:
+            prefix += num
+
+            if prefix - k in mp:
+                count += mp[prefix - k]
+
+            if prefix in mp:
+                mp[prefix] += 1
+            else:
+                mp[prefix] = 1
+
+        return count
