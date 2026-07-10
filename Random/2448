@@ -1,0 +1,21 @@
+class Solution:
+    def minCost(self, nums: List[int], cost: List[int]) -> int:
+
+        def calc(x):
+            total = 0
+            for i in range(len(nums)):
+                total += abs(x - nums[i]) * cost[i]
+            return total
+
+        left = min(nums)
+        right = max(nums)
+
+        while left < right:
+            mid = (left + right) // 2
+
+            if calc(mid) <= calc(mid + 1):
+                right = mid
+            else:
+                left = mid + 1
+
+        return calc(left)
