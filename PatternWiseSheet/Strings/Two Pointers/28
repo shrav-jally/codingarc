@@ -1,0 +1,29 @@
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        for i in range(len(haystack)):
+            if haystack[i] == needle[0]:
+                temp = i
+                for j in range(len(needle)):
+                    if temp >= len(haystack):
+                        break
+                    if needle[j] == haystack[temp]:
+                        temp += 1
+                        if j == len(needle) - 1:
+                            return i
+                    else:
+                        break
+        return -1
+
+
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        return haystack.find(needle)
+
+
+
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        try:
+            return haystack.index(needle)
+        except ValueError:
+            return -1
