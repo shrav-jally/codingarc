@@ -1,0 +1,19 @@
+# 2483. Minimum Penalty for a Shop
+
+class Solution:
+    def bestClosingTime(self, customers: str) -> int:
+        score = 0
+        best = 0
+        ans = 0
+
+        for i, ch in enumerate(customers):
+            if ch == 'Y':
+                score += 1
+            else:
+                score -= 1
+
+            if score > best:
+                best = score
+                ans = i + 1
+
+        return ans
