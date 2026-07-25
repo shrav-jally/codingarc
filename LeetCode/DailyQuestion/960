@@ -1,0 +1,22 @@
+# 960. Delete Columns to Make Sorted III
+
+from typing import List
+
+class Solution:
+    def minDeletionSize(self, strs: List[str]) -> int:
+        m = len(strs)
+        n = len(strs[0])
+
+        dp = [1] * n
+
+        for j in range(n):
+            for i in range(j):
+                ok = True
+                for row in range(m):
+                    if strs[row][i] > strs[row][j]:
+                        ok = False
+                        break
+                if ok:
+                    dp[j] = max(dp[j], dp[i] + 1)
+
+        return n - max(dp)
