@@ -1,0 +1,22 @@
+# 2054. Two Best Non-Overlapping Events
+
+from typing import List
+from bisect import bisect_right
+
+class Solution:
+    def maxTwoEvents(self, events: List[List[int]]) -> int:
+        events.sort()
+
+        n = len(events)
+        starts = [e[0] for e in events]
+
+        suffix = [0] * (n + 1)
+        for i in range(n - 1, -1, -1):
+            suffix[i] = max(suffix[i + 1], events[i][2])
+
+        ans = 0
+        for s, e, v in events:
+            idx = bisect_right(starts, e)
+            ans = max(ans, v + suffix[idx])
+
+        return ans
