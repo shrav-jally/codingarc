@@ -1,0 +1,41 @@
+# 840. Magic Squares In Grid
+
+from typing import List
+
+class Solution:
+    def numMagicSquaresInside(self, grid: List[List[int]]) -> int:
+        m, n = len(grid), len(grid[0])
+
+        def magic(i, j):
+            nums = []
+            for r in range(i, i+3):
+                for c in range(j, j+3):
+                    nums.append(grid[r][c])
+
+            if sorted(nums) != list(range(1,10)):
+                return False
+
+            s = sum(grid[i][j:j+3])
+
+            for r in range(i, i+3):
+                if sum(grid[r][j:j+3]) != s:
+                    return False
+
+            for c in range(j, j+3):
+                if grid[i][c] + grid[i+1][c] + grid[i+2][c] != s:
+                    return False
+
+            if grid[i][j] + grid[i+1][j+1] + grid[i+2][j+2] != s:
+                return False
+
+            if grid[i][j+2] + grid[i+1][j+1] + grid[i+2][j] != s:
+                return False
+
+            return True
+
+        ans = 0
+        for i in range(m-2):
+            for j in range(n-2):
+                if magic(i, j):
+                    ans += 1
+        return ans
