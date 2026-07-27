@@ -1,0 +1,34 @@
+# 2092. Find All People With Secret
+from collections import defaultdict, deque
+
+class Solution:
+    def findAllPeople(self, n: int, meetings: List[List[int]], firstPerson: int) -> List[int]:
+        know = {0, firstPerson}
+        meetings.sort(key=lambda x: x[2])
+        i = 0
+
+        while i < len(meetings):
+            t = meetings[i][2]
+            graph = defaultdict(list)
+            people = set()
+
+            while i < len(meetings) and meetings[i][2] == t:
+                x, y, _ = meetings[i]
+                graph[x].append(y)
+                graph[y].append(x)
+                people.add(x)
+                people.add(y)
+                i += 1
+
+            q = deque([p for p in people if p in know])
+            seen = set(q)
+
+            while q:
+                u = q.popleft()
+                know.add(u)
+                for v in graph[u]:
+                    if v not in seen:
+                        seen.add(v)
+                        q.append(v)
+
+        return list(know)
