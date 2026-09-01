@@ -1,0 +1,75 @@
+from collections import deque
+
+class Solution:
+    def minMoves(self, classroom, energy):
+        m = len(classroom)
+        n = len(classroom[0])
+
+        # Find S and give every L an index
+        start = None
+        litter = {}
+
+        count = 0
+
+        for i in range(m):
+            for j in range(n):
+                if classroom[i][j] == 'S':
+                    start = (i, j)
+                elif classroom[i][j] == 'L':
+                    litter[(i, j)] = count
+                    count += 1
+
+        # All litter collected
+        target = (1 << count) - 1
+
+        # BFS: row, col, mask, remaining_energy
+        q = deque()
+        q.append((start[0], start[1], 0, energy, 0))
+
+        # best[r][c][mask] = maximum energy we've had
+        # at this position with this collection state
+        best = [[{} for _ in range(n)] for _ in range(m)]
+        best[start[0]][start[1]][0] = energy
+
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+        while q:
+            r, c, mask, e, moves = q.popleft()
+
+            if mask == target:
+                return moves
+
+            for dr, dc in directions:
+                nr = r + dr
+                nc = c + dc
+
+                if nr < 0 or nr >= m or nc < 0 or nc >= n:
+                    continue
+
+                if classroom[nr][nc] == 'X':
+                    continue
+
+                # Cannot move if we have no energy
+                if e == 0:
+                    continue
+
+                ne = e - 1
+                nmask = mask
+
+                # Collect litter
+                if (nr, nc) in litter:
+                    nmask |= 1 << litter[(nr, nc)]
+
+                # Reset energy
+                if classroom[nr][nc] == 'R':
+                    ne = energy
+
+                # If we've already reached this state with
+                # at least as much energy, this one is useless
+                if ne <= best[nr][nc].get(nmask, -1):
+                    continue
+
+                best[nr][nc][nmask] = ne
+                q.append((nr, nc, nmask, ne, moves + 1))
+
+        return -1
