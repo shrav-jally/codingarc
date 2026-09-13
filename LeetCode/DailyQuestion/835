@@ -1,0 +1,7 @@
+class Solution:
+    def largestOverlap(self, img1, img2):
+        n = len(img1)
+        a = [(i,j) for i in range(n) for j in range(n) if img1[i][j]]
+        b = [(i,j) for i in range(n) for j in range(n) if img2[i][j]]
+        from collections import Counter
+        return max(Counter((x-u,y-v) for x,y in a for u,v in b).values(), default=0)
