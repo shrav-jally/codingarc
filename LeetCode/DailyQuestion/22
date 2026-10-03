@@ -1,17 +1,17 @@
 class Solution:
-    def longestValidParentheses(self, s: str) -> int:
-        st = [-1]
-        ans = 0
+    def generateParenthesis(self, n: int) -> list[str]:
+        res = []
 
-        for i in range(len(s)):
-            if s[i] == '(':
-                st.append(i)
-            else:
-                st.pop()
+        def backtrack(s, op, cl):
+            if len(s) == 2 * n:
+                res.append(s)
+                return
 
-                if not st:
-                    st.append(i)
-                else:
-                    ans = max(ans, i - st[-1])
+            if op < n:
+                backtrack(s + "(", op + 1, cl)
 
-        return ans
+            if cl < op:
+                backtrack(s + ")", op, cl + 1)
+
+        backtrack("", 0, 0)
+        return res
